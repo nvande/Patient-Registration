@@ -1,6 +1,6 @@
 import FooterComponent from './FooterComponent.js';
 
-const footer = "This website is not real.";
+const footer = "This website is for demonstration purposes only.";
 
 function PageComponent(props) {
   return (

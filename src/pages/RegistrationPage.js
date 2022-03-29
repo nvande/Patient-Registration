@@ -5,9 +5,9 @@ function RegistrationPage() {
 	return (
 		<PageComponent>
 			<div className="mt-5">
-				<h1 className={"text-center"}>
+				<h3 className={"text-center"}>
 					Patient Registration
-				</h1>
+				</h3>
 				<RegistrationComponent/>
 			</div>
 		</PageComponent>

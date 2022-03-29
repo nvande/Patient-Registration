@@ -1,7 +1,7 @@
 function FooterComponent(props){
 	return (
-		<div className={'text-center mt-5 mb-2 text-muted'}>
-			{props.footer}
+		<div className={'text-center mt-5 mb-5 text-muted'}>
+			<small>{props.footer}</small>
 		</div>
 	);
 }
