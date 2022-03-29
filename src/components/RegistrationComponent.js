@@ -1,7 +1,9 @@
+import Button from 'react-bootstrap/Button';
+
 function RegistrationComponent() {
 	return (
 		<p>
-			Register Here!
+			<Button>Get started!</Button>
 		</p>
 	);
 }
