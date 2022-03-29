@@ -2,9 +2,9 @@ import RegistrationComponent from '../components/RegistrationComponent.js'
 
 function RegistrationPage() {
 	return (
-		<div>
+		<div className="mt-5">
 			<h1>
-				Registration
+				Patient Registration
 			</h1>
 			<RegistrationComponent/>
 		</div>
