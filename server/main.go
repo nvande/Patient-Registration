@@ -132,7 +132,7 @@ func returnAllAppointments(w http.ResponseWriter, r *http.Request){
 	fmt.Println("Endpoint Hit: returnAllAppointments")
 
 	// Execute the query
-    results, err := DB.Query("SELECT id, name, dob FROM appts")
+    results, err := DB.Query("SELECT id, name, dob FROM ?", appt_table_name)
     ErrorCheck(err)
 
 	var appts []Appt
@@ -160,7 +160,7 @@ func returnSingleAppointment(w http.ResponseWriter, r *http.Request){
 	var appt Appt
 
 	// Execute the query
-    err := DB.QueryRow("SELECT id, name, dob FROM appts WHERE id = ?", key).Scan(&appt.Id, &appt.Name, &appt.Dob)
+    err := DB.QueryRow("SELECT id, name, dob FROM ? WHERE id = ?", appt_table_name, key).Scan(&appt.Id, &appt.Name, &appt.Dob)
     ErrorCheck(err)
 
 	json.NewEncoder(w).Encode(appt)
@@ -183,11 +183,11 @@ func createNewAppointment(w http.ResponseWriter, r *http.Request) {
 
     // insert into db
 	// prepare  
-	stmt, err := DB.Prepare("INSERT INTO appts(name, dob) values (?, ?)")
+	stmt, err := DB.Prepare("INSERT INTO ?(name, dob) values (?, ?)")
 	ErrorCheck(err)
 
 	//execute
-	res, err := stmt.Exec(appt.Name, appt.Dob)
+	res, err := stmt.Exec(appt_table_name, appt.Name, appt.Dob)
 	ErrorCheck(err)
 
 	id, err := res.LastInsertId()
