@@ -1,6 +1,7 @@
 import logo from './logo.svg';
 import HomePage from './pages/HomePage.js';
 import RegistrationPage from './pages/RegistrationPage';
+import AppointmentsPage from './pages/AppointmentsPage';
 import './App.css';
 
 import {
@@ -17,6 +18,7 @@ function App() {
         <Routes>
           <Route exact path="/" element={<HomePage/>}/>
           <Route path="/register" element={<RegistrationPage/>}/>
+          <Route path="/appointments" element={<AppointmentsPage/>}/>
         </Routes>
       </Router>
     </div>
