@@ -43,7 +43,7 @@ func handleRequests() {
 func main() {
 	fmt.Println("Patient Registration Server Starting...")
 
-	db, err := sql.Open("mysql", dbuser+":"+db_pass+"@tcp(127.0.0.1:3306)/prdb")
+	db, err := sql.Open("mysql", db_user+":"+db_pass+"@tcp(127.0.0.1:3306)/prdb")
 
 	if err != nil {
 		panic(err.Error())
@@ -55,8 +55,9 @@ func main() {
 	}
 
 	handleRequests()
+
 	// close when the main function has finished execution
-	// defer db.Close()
+	defer db.Close()
 }
 
 func returnAllAppointments(w http.ResponseWriter, r *http.Request){
