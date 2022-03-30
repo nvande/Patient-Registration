@@ -22,10 +22,31 @@ const (
 	appt_table_name = "appts"
 )
 
+type Address struct {
+	Address1 string `json:"address1"`
+	Address2 string `json:"address2"`
+	City     string `json:"city"`
+	Country  string `json:"country"`
+	Region   string `json:"region"`
+	Postal   string `json:"postal"`
+}
+
+type Patient struct {
+	Firstname string  `json:"firstname"`
+	Middle    string  `json:"middle"`
+	Lastname  string  `json:"lastname"`
+	Dob       string  `json:"dob"`
+	Phone     string  `json:"phone"`
+	Email     string  `json:"email"`
+	Address   Address `json:"address"`
+	Photo     string  `json:"photo"`
+}
+
 type Appt struct {
-	Id   int `json:"id,omitempty"`
-	Name string `json:"name"`
-	Dob  string `json:"dob"`
+	Id        int64   `json:"id,omitempty"`
+	Patient   Patient `json:"patient"`
+	ApptTime  string  `json:"appt_time"`
+	CreatedAt string  `json:"created_at"`
 }
 
 // DB is a global variable to hold db connection
@@ -47,8 +68,23 @@ func dsn(dbName string) string {
 }
 
 func createAppointmentTable(db *sql.DB) error {
-	query := `CREATE TABLE IF NOT EXISTS `+appt_table_name+`(id int primary key auto_increment, name varchar(255), 
-        dob date, created_at datetime default CURRENT_TIMESTAMP)`
+	query := `CREATE TABLE IF NOT EXISTS `+appt_table_name+`(
+		id int primary key auto_increment,
+		firstname varchar(255),
+		middle varchar(1) NOT NULL DEFAULT '',
+		lastname varchar(255), 
+        dob date,
+        phone varchar(30),
+        email varchar(320),
+        address1 varchar(255),
+        address2 varchar(255) NOT NULL DEFAULT '',
+        city varchar(255), 
+        country varchar(255),
+        region varchar(255),
+        postal varchar(30),
+        photo varchar(255),
+        appt_time datetime, 
+        created_at datetime default CURRENT_TIMESTAMP)`
 
    	ctx, cancelfunc := context.WithTimeout(context.Background(), 5*time.Second)
    	defer cancelfunc()
@@ -132,7 +168,22 @@ func returnAllAppointments(w http.ResponseWriter, r *http.Request){
 	fmt.Println("Endpoint Hit: returnAllAppointments")
 
 	// Execute the query
-    results, err := DB.Query("SELECT id, name, dob FROM ?", appt_table_name)
+    results, err := DB.Query(`SELECT id,
+    	firstname,
+    	middle,
+    	lastname,
+    	dob,
+    	phone,
+    	email,
+    	address1,
+    	address2,
+    	city,
+    	country,
+    	region,
+    	postal,
+    	photo,
+    	appt_time,
+    	created_at FROM `+appt_table_name)
     ErrorCheck(err)
 
 	var appts []Appt
@@ -140,9 +191,26 @@ func returnAllAppointments(w http.ResponseWriter, r *http.Request){
 	for results.Next() {
         var appt Appt
         // for each row, scan the result into our appt composite object
-        err = results.Scan(&appt.Id, &appt.Name, &appt.Dob)
+        err = results.Scan(
+        	&appt.Id,
+        	&appt.Patient.Firstname,
+        	&appt.Patient.Middle,
+        	&appt.Patient.Lastname,
+        	&appt.Patient.Dob,
+        	&appt.Patient.Phone,
+        	&appt.Patient.Email,
+        	&appt.Patient.Address.Address1,
+        	&appt.Patient.Address.Address2,
+        	&appt.Patient.Address.City,
+        	&appt.Patient.Address.Country,
+        	&appt.Patient.Address.Region,
+        	&appt.Patient.Address.Postal,
+        	&appt.Patient.Photo,
+        	&appt.ApptTime,
+        	&appt.CreatedAt,
+        )
         if err != nil {
-            log.Print("results err: "+err.Error())
+            log.Printf("results err: %s", err.Error())
         }
         // slap it onto the end of our appointments
 		appts = append(appts, appt)
@@ -160,7 +228,39 @@ func returnSingleAppointment(w http.ResponseWriter, r *http.Request){
 	var appt Appt
 
 	// Execute the query
-    err := DB.QueryRow("SELECT id, name, dob FROM ? WHERE id = ?", appt_table_name, key).Scan(&appt.Id, &appt.Name, &appt.Dob)
+    err := DB.QueryRow(`SELECT id,
+    	firstname,
+    	middle,
+    	lastname,
+    	dob,
+    	phone,
+    	email,
+    	address1,
+    	address2,
+    	city,
+    	country,
+    	region,
+    	postal,
+    	photo,
+    	appt_time,
+    	created_at FROM `+appt_table_name+" WHERE id = ?", key).Scan(
+	    	&appt.Id,
+	    	&appt.Patient.Firstname,
+	    	&appt.Patient.Middle,
+	    	&appt.Patient.Lastname,
+	    	&appt.Patient.Dob,
+	    	&appt.Patient.Phone,
+	    	&appt.Patient.Email,
+	    	&appt.Patient.Address.Address1,
+	    	&appt.Patient.Address.Address2,
+	    	&appt.Patient.Address.City,
+	    	&appt.Patient.Address.Country,
+	    	&appt.Patient.Address.Region,
+	    	&appt.Patient.Address.Postal,
+	    	&appt.Patient.Photo,
+	    	&appt.ApptTime,
+	    	&appt.CreatedAt,
+    )
     ErrorCheck(err)
 
 	json.NewEncoder(w).Encode(appt)
@@ -183,17 +283,49 @@ func createNewAppointment(w http.ResponseWriter, r *http.Request) {
 
     // insert into db
 	// prepare  
-	stmt, err := DB.Prepare("INSERT INTO ?(name, dob) values (?, ?)")
+	stmt, err := DB.Prepare(`INSERT INTO `+appt_table_name+`(
+		firstname,
+		middle,
+    	lastname,
+    	dob,
+    	phone,
+    	email,
+    	address1,
+    	address2,
+    	city,
+    	country,
+    	region,
+    	postal,
+    	photo,
+    	appt_time
+    ) values (?,?,?,?,?,?,?,?,?,?,?,?,?,?)`)
 	ErrorCheck(err)
 
 	//execute
-	res, err := stmt.Exec(appt_table_name, appt.Name, appt.Dob)
+	res, err := stmt.Exec(
+    	appt.Patient.Firstname,
+    	appt.Patient.Middle,
+    	appt.Patient.Lastname,
+    	appt.Patient.Dob,
+    	appt.Patient.Phone,
+    	appt.Patient.Email,
+    	appt.Patient.Address.Address1,
+    	appt.Patient.Address.Address2,
+    	appt.Patient.Address.City,
+    	appt.Patient.Address.Country,
+    	appt.Patient.Address.Region,
+    	appt.Patient.Address.Postal,
+    	appt.Patient.Photo,
+    	appt.ApptTime,
+	)
 	ErrorCheck(err)
+	dt := time.Now()
 
 	id, err := res.LastInsertId()
     ErrorCheck(err)
  
-    appt.Id = int(id)
+    appt.Id = id
+    appt.CreatedAt = dt.Format("01-02-2006 15:04:05")
 
 	json.NewEncoder(w).Encode(appt)
 	
