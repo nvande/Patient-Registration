@@ -1,13 +1,16 @@
-import RegistrationComponent from '../components/RegistrationComponent.js'
+import PageComponent from '../components/PageComponent.js';
+import RegistrationComponent from '../components/RegistrationComponent.js';
 
 function RegistrationPage() {
 	return (
-		<div className="mt-5">
-			<h1>
-				Patient Registration
-			</h1>
-			<RegistrationComponent/>
-		</div>
+		<PageComponent>
+			<div className="mt-5">
+				<h3 className={"text-center"}>
+					Patient Registration
+				</h3>
+				<RegistrationComponent/>
+			</div>
+		</PageComponent>
 	);
 }
 
