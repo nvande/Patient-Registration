@@ -2,6 +2,7 @@ package main
 
 import (
 	"strconv"
+	"sort"
 	"context"
 	"fmt"
 	"log"
@@ -242,9 +243,17 @@ func returnAllAppointments(w http.ResponseWriter, r *http.Request){
 		appts = append(appts, appt)
     }
 
+    sort.SliceStable(appts, func(i, j int) bool {
+	    return appts[i].ApptTime > appts[j].ApptTime
+	})
+
     msg := "Returned list of all appointments"
     log.Println(msg);
     res := GenerateResponse(true, msg, appts)
+
+    // allow CORS
+	w.Header().Set("Content-Type", "text/html; charset=utf-8")
+	w.Header().Set("Access-Control-Allow-Origin", "*")
 
 	json.NewEncoder(w).Encode(res)
 }

@@ -1,5 +1,7 @@
 import { useState, useEffect } from 'react';
 
+import AppointmentComponent from '../components/AppointmentComponent.js';
+
 function AppointmentsComponent() {
 	const [appts, setAppts] = useState([]);
 
@@ -7,15 +9,16 @@ function AppointmentsComponent() {
 		fetch('http://localhost:3007/api/appointments')
         .then(res => res.json())
         .then((data) => {
-        	console.log(data);
-          	setAppts(data);
+          	setAppts(data.data);
         })
         .catch(console.log)
-	});
+	}, []);
 
 	return (
 		<div>
-			{appts}
+			{appts.map((appt) => (
+				<AppointmentComponent appt={appt} key={appt.id}/>
+			))}
 		</div>
 	)
 	

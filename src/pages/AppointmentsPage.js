@@ -6,7 +6,7 @@ function RegistrationPage() {
 
 		<PageComponent>
 			<div className="mt-5">
-				<h3 className={"text-center"}>
+				<h3 className={"text-center mb-5"}>
 					Appointments
 				</h3>
 			</div>
