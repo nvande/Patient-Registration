@@ -1,6 +1,7 @@
 package main
 
 import (
+	"strconv"
 	"context"
 	"fmt"
 	"log"
@@ -49,8 +50,30 @@ type Appt struct {
 	CreatedAt string  `json:"created_at"`
 }
 
+type Response struct {
+	Success bool   `json:"success"`
+	Message string `json:"message"`
+	Data    Data   `json:"data,omitempty"`
+}
+
+type Data = interface{}
+
 // DB is a global variable to hold db connection
 var DB *sql.DB
+
+func GenerateResponse(s bool, m string, d Data) Response {
+	return Response{s, m, d}
+}
+
+func (r *Response) MustMarshal() []byte {
+	j, err := json.Marshal(r)
+
+	if err != nil {
+		log.Printf(err.Error())
+	}
+
+	return j
+}
 
 func ErrorCheck(err error) {
     if err != nil {
@@ -165,7 +188,7 @@ func main() {
 }
 
 func returnAllAppointments(w http.ResponseWriter, r *http.Request){
-	fmt.Println("Endpoint Hit: returnAllAppointments")
+	log.Println("Endpoint Hit: returnAllAppointments")
 
 	// Execute the query
     results, err := DB.Query(`SELECT id,
@@ -211,16 +234,23 @@ func returnAllAppointments(w http.ResponseWriter, r *http.Request){
         )
         if err != nil {
             log.Printf("results err: %s", err.Error())
+            res := GenerateResponse(false, "Error returning appointments", nil)
+			json.NewEncoder(w).Encode(res)
+			return
         }
         // slap it onto the end of our appointments
 		appts = append(appts, appt)
     }
 
-	json.NewEncoder(w).Encode(appts)
+    msg := "Returned list of all appointments"
+    log.Println(msg);
+    res := GenerateResponse(true, msg, appts)
+
+	json.NewEncoder(w).Encode(res)
 }
 
 func returnSingleAppointment(w http.ResponseWriter, r *http.Request){
-	fmt.Println("Endpoint Hit: returnSingleAppointment")
+	log.Println("Endpoint Hit: returnSingleAppointment")
 
 	vars := mux.Vars(r)
 	key := vars["id"]
@@ -261,13 +291,23 @@ func returnSingleAppointment(w http.ResponseWriter, r *http.Request){
 	    	&appt.ApptTime,
 	    	&appt.CreatedAt,
     )
-    ErrorCheck(err)
+    if err != nil {
+        log.Println(err)
+        res := GenerateResponse(false, "Error returning appointment", nil)
+			json.NewEncoder(w).Encode(res)
+			return
+        return
+    }
 
-	json.NewEncoder(w).Encode(appt)
+    msg := "Returned single appointment with id "
+    log.Println(msg+key);
+    res := GenerateResponse(true, msg+key, appt)
+
+	json.NewEncoder(w).Encode(res)
 }
 
 func createNewAppointment(w http.ResponseWriter, r *http.Request) {
-	fmt.Println("Endpoint Hit: createNewAppointment")
+	log.Println("Endpoint Hit: createNewAppointment")
 
 	// read from the body of the POST request
 	reqBody, _ := ioutil.ReadAll(r.Body)
@@ -302,7 +342,7 @@ func createNewAppointment(w http.ResponseWriter, r *http.Request) {
 	ErrorCheck(err)
 
 	//execute
-	res, err := stmt.Exec(
+	result, err := stmt.Exec(
     	appt.Patient.Firstname,
     	appt.Patient.Middle,
     	appt.Patient.Lastname,
@@ -318,15 +358,25 @@ func createNewAppointment(w http.ResponseWriter, r *http.Request) {
     	appt.Patient.Photo,
     	appt.ApptTime,
 	)
-	ErrorCheck(err)
-	dt := time.Now()
+	if err != nil {
+		log.Println(err)
+		res := GenerateResponse(false, "Error returning appointments", nil)
+		json.NewEncoder(w).Encode(res)
+		return
+	}
 
-	id, err := res.LastInsertId()
+	dt := time.Now()
+	id, err := result.LastInsertId()
     ErrorCheck(err)
  
     appt.Id = id
     appt.CreatedAt = dt.Format("01-02-2006 15:04:05")
 
-	json.NewEncoder(w).Encode(appt)
+    strid := strconv.FormatInt(id, 10)
+    msg := "Created new appointment with id "
+    log.Println(msg+strid);
+	res := GenerateResponse(true, msg+strid, appt)
+
+	json.NewEncoder(w).Encode(res)
 	
 }
