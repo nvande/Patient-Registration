@@ -39,7 +39,7 @@ function RegistrationComponent() {
 
 	const [values, setValues] = useState({});
 
-	const changeHandler = (e, funct) =>{
+	const changeHandler = (e, funct) => {
 		const {name, value} = e.target;
         funct(prev => ({...prev, [name]: value}));
     };

@@ -6,13 +6,17 @@ function AppointmentsComponent() {
 	const [appts, setAppts] = useState([]);
 
 	useEffect(() => {
+		fetchAppointments();
+	}, []);
+
+	const fetchAppointments = () => {
 		fetch('http://localhost:3007/api/appointments')
         .then(res => res.json())
         .then((data) => {
           	setAppts(data.data);
         })
         .catch(console.log)
-	}, []);
+	};
 
 	return (
 		<div>
