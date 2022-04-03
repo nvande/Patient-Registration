@@ -1,6 +1,6 @@
-import { useState } from 'react';
+import { useState, Fragment } from 'react';
 
-import { Container, Row, Col, Button, Form } from 'react-bootstrap';
+import { Container, Row, Col, Button, Form, Alert, InputGroup } from 'react-bootstrap';
 import DateTimePicker from 'react-datetime-picker';
 import DatePicker from 'react-date-picker';
 import PhoneInput from 'react-phone-input-2';
@@ -8,6 +8,7 @@ import 'react-phone-input-2/lib/style.css';
 import { CountryDropdown, RegionDropdown, CountryRegionData } from 'react-country-region-selector';
 
 import { FaUser, FaIdCard, FaCalendarPlus } from 'react-icons/fa';
+import { format, parseISO } from "date-fns";
 
 function handleChange() {
 
@@ -30,14 +31,20 @@ function RegistrationComponent() {
 		country: '',
 		region: '',
 		postal: ''
+	});
+	const [photo, setPhoto] = useState('');
+	const [apptTime, setApptTime] = useState('');
 
-	})
-	
-	const [apptDate, setApptDate] = useState('');
+	const [imageUploaded, setImageUploaded] = useState(false);
+	const [uploadedImageName, setUploadedImageName] = useState(null);
 
-	const [errors, setErrors] = useState('');
+	const [error, setError] = useState(false);
+	const [success, setSuccess] = useState(false);
+	const [validation, setValidation] = useState('');
 
-	const [values, setValues] = useState({});
+	const handleFile = e => {
+		setPhoto(e.target.files[0]);
+	}
 
 	const changeHandler = (e, funct) => {
 		const {name, value} = e.target;
@@ -48,11 +55,116 @@ function RegistrationComponent() {
     	setAddress(prev => ({...prev, [name]: value}));
     };
 
+    const uploadFile = () => {
+    	let formData = new FormData();
+    	formData.append("licenseImage", photo);
+
+    	let requestOptions = null;
+    	try {
+	    	requestOptions = {
+		        method: 'POST',
+		        body: formData,
+		    };
+		} catch (error) {
+			console.error(error);
+			setError(true);
+		}
+		if (requestOptions) {
+		    fetch('http://localhost:3007/api/license', requestOptions)
+	        	.then(res => res.json())
+	        	.then((data) => {
+	        		setImageUploaded(data.success);
+	        		setUploadedImageName(data.data);
+	          		setError(!data.success);
+	        	})
+	        	.catch(error => {
+	        		console.error(error);
+	        		setError(true);
+	        	});
+        }
+    };
+
+    const removeImage = () => {
+    	setPhoto('');
+    	setImageUploaded(false);
+    	setUploadedImageName(null);
+    }
+
+    const postRegistration = () => {
+    	if(!imageUploaded) {
+    		setError(true);
+    		return
+    	}
+    	let requestOptions = null;
+    	try {
+	    	requestOptions = {
+		        method: 'POST',
+		        headers: { 'Content-Type': 'text/plain' },
+		        body: JSON.stringify({
+	         		patient:
+	        		{
+	        			firstname:name.first,
+	        			middle:name.middle,
+	        			lastname:name.last,
+	        			dob:format(new Date(dob), "yyyy:MM:dd"),
+	        			phone:phone,
+	        			email:email,
+	        			address:
+	        			{
+	    					address1:address.line1,
+	    					address2:address.line2,
+	    					city:address.city,
+	    					country:address.country,
+	    					region:address.region,
+	    					postal:address.postal
+	        			},
+	        			photo:uploadedImageName
+	        		},
+		        	appt_time:format(new Date(apptTime), "yyyy-MM-dd HH:mm:ss"),
+		        })
+		    };
+		} catch (error) {
+			console.error(error);
+			setError(true);
+		}
+		if (requestOptions) {
+		    fetch('http://localhost:3007/api/appointment', requestOptions)
+	        	.then(res => res.json())
+	        	.then((data) => {
+	        		console.log(data);
+	          		setSuccess(data.success);
+	          		setError(!data.success);
+	        	})
+	        	.catch(error => {
+	        		console.error(error);
+	        		setError(true);
+	        	});
+        }
+    };
+
+    
+
 	return (
 		<div>
 			<Form>
 				<h4 className={"mt-5 lead"}><FaUser className="stepIcon"/> Patient Information </h4>
 			 	<Container className="my-3">
+			 		{ error && 
+			 	      <Alert variant="danger" onClose={() => setError(false)} dismissible>
+				        <Alert.Heading>Unable to make this appointment</Alert.Heading>
+				        <p>
+				          Something went wrong.
+				        </p>
+				      </Alert>
+				    }
+				    { success && 
+			 	      <Alert variant="success" onClose={() => setSuccess(false)} dismissible>
+				        <Alert.Heading>Successfully made appointment!</Alert.Heading>
+				        <p>
+				          See you then!
+				        </p>
+				      </Alert>
+				    }
 					<Row>
 						<Col xs={8} sm={8} lg={5} className={"mb-2 mb-md-4"}>
 							<Form.Group controlId="formFirstName">
@@ -115,7 +227,6 @@ function RegistrationComponent() {
 			                className="mb-2"
 			                value={address.line1}
 			                onChange={(e) => changeHandler(e,setAddress)}
-			                isInvalid={!!errors.address}
 			                required
 			              />
 			            </Form.Group>
@@ -131,11 +242,10 @@ function RegistrationComponent() {
 			                name="line2"
 			                value={address.line2}
 			                onChange={(e) => changeHandler(e,setAddress)}
-			                isInvalid={!!errors.address}
 			                required
 			              />
 			              <Form.Control.Feedback type="invalid" tooltip>
-			                {errors.city}
+			                
 			              </Form.Control.Feedback>
 			            </Form.Group>
 			            <Form.Group
@@ -151,12 +261,11 @@ function RegistrationComponent() {
 			                name="city"
 			                value={address.city}
 			                onChange={(e) => changeHandler(e,setAddress)}
-			                isInvalid={!!errors.city}
 			                required
 			              />
 
 			              <Form.Control.Feedback type="invalid" tooltip>
-			                {errors.city}
+			                
 			              </Form.Control.Feedback>
 			            </Form.Group>
 			            <Form.Group
@@ -203,12 +312,10 @@ function RegistrationComponent() {
 			                name="postal"
 			                value={address.postal}
 			                onChange={(e) => changeHandler(e,setAddress)}
-			                isInvalid={!!errors.postal}
 			                required
 			              />
 
 			              <Form.Control.Feedback type="invalid" tooltip>
-			                {errors.postal}
 			              </Form.Control.Feedback>
 			            </Form.Group>
 			        </Row>
@@ -217,7 +324,7 @@ function RegistrationComponent() {
 			    	<Row>
 			    		<Col md="6" className="d-none d-md-block">
 			    			<h5 className={"mt-5 lead"}><FaIdCard className="stepIcon"/> Upload Image of Patient's Driver's License </h5>
-			    			<Form.Label>Supported File Extensions: JPEG, PNG</Form.Label>
+			    			<Form.Label>Supported File Extensions: JPG, JPEG, PNG, GIF</Form.Label>
 			    		</Col>
 			    		<Col md="6" className="d-none d-md-block">
 			    			<h5 className={"mt-5 lead"}><FaCalendarPlus className="stepIcon"/> Select Appointment Day & Time </h5>
@@ -229,17 +336,30 @@ function RegistrationComponent() {
 				        	md="6"
 				        >
 				        	<h5 className={"mt-5 d-md-none lead"}><FaIdCard className="stepIcon"/> Upload Image of Patient's Driver's License</h5>
-				            <Form.Control
-				              type="file"
-				              required
-				              name="file"
-				              onChange={handleChange}
-				              isInvalid={!!errors.file}
-				              required
-				            />
-				            <Form.Control.Feedback type="invalid" tooltip>
-				              {errors.file}
-				            </Form.Control.Feedback>
+				        	{ !imageUploaded ?
+					        	<InputGroup>
+						            <Form.Control
+						              type="file"
+						              required
+						              name="file"
+						              onChange={handleFile}
+						            />
+						            <Form.Control.Feedback type="invalid" tooltip>
+						            </Form.Control.Feedback>
+						            <Button variant="outline-secondary" id="button-addon2" onClick={uploadFile}>
+								      Upload Image
+								    </Button>
+						        </InputGroup>
+						        :
+						        <Fragment>
+							        <div className={'uploadedImage mb-3 border'}>
+							        	<img src={URL.createObjectURL(photo)}/>
+							        </div>
+							        <Button variant="outline-secondary" id="button-addon2" onClick={removeImage}>
+									      Remove Image
+									</Button>
+								</Fragment>
+						    }
 				        </Form.Group>
 						<Form.Group
 							controlId="formFirstName"
@@ -249,15 +369,15 @@ function RegistrationComponent() {
 							<h5 className={"d-md-none mt-5 lead"}><FaCalendarPlus className="stepIcon"/> Select Appointment Day & Time </h5>
 							<DateTimePicker
 								inputProps = {{required:true}}
-								value={apptDate}
-								onChange={setApptDate}
+								value={apptTime}
+								onChange={setApptTime}
 								disableClock
 							/>
 						</Form.Group>
 					</Row>
 				</Container>
 			    <div className={'text-center mt-5'}>
-					<Button className={'px-5'} variant="primary" type="submit">
+					<Button className={'px-5'} variant="primary" onClick={postRegistration}>
 				    	Register
 					</Button>
 			    </div>

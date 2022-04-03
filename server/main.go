@@ -7,8 +7,13 @@ import (
 	"fmt"
 	"log"
 	"time"
+	"os"
+	"io"
+	"strings"
+	"path/filepath"
 	"net/http"
 	"encoding/json"
+	"github.com/google/uuid"
 	"github.com/gorilla/mux"
 	"io/ioutil"
 	"database/sql"
@@ -76,6 +81,14 @@ func (r *Response) MustMarshal() []byte {
 	return j
 }
 
+func CheckValidFile(ext string) bool {
+	switch ext {
+	case ".jpg", ".jpeg", ".png", ".gif":
+		return true
+	}
+	return false
+}
+
 func ErrorCheck(err error) {
     if err != nil {
         log.Printf(err.Error())
@@ -135,6 +148,7 @@ func handleRequests() {
 	router.HandleFunc("/api/appointment", createNewAppointment).Methods("POST")
 	router.HandleFunc("/api/appointments", returnAllAppointments)
 	router.HandleFunc("/api/appointment/{id}", returnSingleAppointment)
+	router.HandleFunc("/api/license", uploadLicense)
 
 	http.Handle("/", router)
 
@@ -312,6 +326,10 @@ func returnSingleAppointment(w http.ResponseWriter, r *http.Request){
     log.Println(msg+key);
     res := GenerateResponse(true, msg+key, appt)
 
+    // allow CORS
+	w.Header().Set("Content-Type", "text/html; charset=utf-8")
+	w.Header().Set("Access-Control-Allow-Origin", "*")
+
 	json.NewEncoder(w).Encode(res)
 }
 
@@ -386,6 +404,70 @@ func createNewAppointment(w http.ResponseWriter, r *http.Request) {
     log.Println(msg+strid);
 	res := GenerateResponse(true, msg+strid, appt)
 
+	// allow CORS
+	w.Header().Set("Content-Type", "text/html; charset=utf-8")
+	w.Header().Set("Access-Control-Allow-Origin", "*")
+
 	json.NewEncoder(w).Encode(res)
-	
+}
+
+func uploadLicense(w http.ResponseWriter, r *http.Request) {
+	log.Println("Endpoint Hit: uploadImage")
+
+	// allow CORS
+	w.Header().Set("Content-Type", "text/html; charset=utf-8")
+	w.Header().Set("Access-Control-Allow-Origin", "*")
+    w.Header().Set("Access-Control-Allow-Headers", "Content-Type, Origin, Authorization")
+
+	// max size 10MB
+	r.ParseMultipartForm(10 << 20)
+
+	file, handler, err := r.FormFile("licenseImage")
+	if err != nil {
+		fmt.Println("Error Retrieving the File")
+        fmt.Println(err)
+        return
+	}
+
+	defer file.Close()
+
+	fmt.Printf("Uploaded File: %+v\n", handler.Filename)
+    fmt.Printf("File Size: %+v\n", handler.Size)
+    fmt.Printf("MIME Header: %+v\n", handler.Header)
+
+    fileExt := strings.ToLower(filepath.Ext(handler.Filename));
+
+    if !CheckValidFile(fileExt) {
+    	msg := "Invalid file type: "+fileExt
+    	log.Println(msg);
+    	res := GenerateResponse(false, msg, nil)
+
+    	json.NewEncoder(w).Encode(res)
+        return
+    }
+
+    // Generate a new filename that is unique.
+    // so use uuid and remove hyphens
+    // and concat with the correct file extension for uploaded file
+    uploadedName := strings.Replace(uuid.NewString(), "-", "", -1) + fileExt
+
+    // Create file
+	dst, err := os.Create("images/"+uploadedName)
+	defer dst.Close()
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	// Copy the uploaded file to the created file on the filesystem
+	if _, err := io.Copy(dst, file); err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+    msg := "Successfully Uploaded File "
+    log.Println(msg);
+    res := GenerateResponse(true, msg, uploadedName)
+
+	json.NewEncoder(w).Encode(res)
 }
