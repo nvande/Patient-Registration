@@ -28,6 +28,14 @@ html, .App {
   transition: border-color .15s ease-in-out,box-shadow .15s ease-in-out;
 }
 
+.react-datetime-picker.is-invalid, .react-date-picker.is-invalid,
+.react-tel-input.is-invalid .form-control,
+.react-tel-input.is-invalid .flag-dropdown,
+.selectCountry.is-invalid,
+.selectRegion.is-invalid {
+  border-color: #dc3545;
+}
+
 .react-datetime-picker__wrapper, .react-date-picker__wrapper{
   border: none;
   height: 24px;
@@ -65,6 +73,16 @@ html, .App {
 .stepIconInline {
   margin-bottom: 7px;
 }
+
+.iconInline {
+  margin-bottom: 4px;
+}
+
+.uploadedImage img{
+  max-height: 200px;
+  padding:  10px;
+}
+
 
 
 

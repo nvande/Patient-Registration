@@ -1,15 +1,16 @@
 import PageComponent from '../components/PageComponent.js';
-import RegistrationComponent from '../components/RegistrationComponent.js';
+import AppointmentsComponent from '../components/AppointmentsComponent.js';
 
 function RegistrationPage() {
 	return (
+
 		<PageComponent>
 			<div className="mt-5">
-				<h3 className={"text-center"}>
-					Patient Registration
+				<h3 className={"text-center mb-5"}>
+					Appointments
 				</h3>
-				<RegistrationComponent/>
 			</div>
+			<AppointmentsComponent/>
 		</PageComponent>
 	);
 }
