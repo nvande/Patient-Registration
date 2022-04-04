@@ -8,13 +8,27 @@ import 'react-phone-input-2/lib/style.css';
 import { CountryDropdown, RegionDropdown, CountryRegionData } from 'react-country-region-selector';
 
 import { FaUser, FaIdCard, FaCalendarPlus } from 'react-icons/fa';
-import { format, parseISO } from "date-fns";
+import { format, parseISO, parse, getTime } from "date-fns";
 
-function handleChange() {
-
-}
+import constraints from '../validate/validate.js';
 
 function RegistrationComponent() {
+	const validate = require("validate.js");
+
+	validate.extend(validate.validators.datetime, {
+	  // The value is guaranteed not to be null or undefined but otherwise it
+	  // could be anything.
+	  parse: function(value, options) {
+	  	console.log(value);
+	  	console.log(getTime(parseISO(value)));
+	    return getTime(parseISO(value));
+	  },
+	  // Input is a unix timestamp
+	  format: function(value, options) {
+	    var format = options.dateOnly ? "yyyy-MM-dd" : "yyyy-MM-dd hh:mm:ss";
+	    return format(value, format);
+	  }
+	});
 
 	const [name, setName] = useState({
 		first: '',
@@ -39,8 +53,9 @@ function RegistrationComponent() {
 	const [uploadedImageName, setUploadedImageName] = useState(null);
 
 	const [error, setError] = useState(false);
+	const [errors, setErrors] = useState([]);
 	const [success, setSuccess] = useState(false);
-	const [validation, setValidation] = useState('');
+	const [validation, setValidation] = useState(undefined);
 
 	const handleFile = e => {
 		setPhoto(e.target.files[0]);
@@ -90,11 +105,68 @@ function RegistrationComponent() {
     	setUploadedImageName(null);
     }
 
+    const validateFields = () => {
+    	const dates = formatDates();
+    	let errors = validate({
+    		first_name: name.first,
+    		middle_initial: name.middle,
+    		last_name: name.last,
+    		date_of_birth: dates.dob,
+    		phone_number:phone,
+	        email_address:email,
+	        address:address.line1,
+			apartment:address.line2,
+			city:address.city,
+			country:address.country,
+			region:address.region,
+			postal:address.postal,
+			license_image: uploadedImageName,
+			appointment_time: dates.appt,
+    	}, constraints);
+    	if(errors && errors.length != 0){
+    		setErrors(errors);
+    		setError("Please fix the following issues before resubmitting: "+validationToString(errors));
+    		return false;
+    	} else {
+    		setErrors([]);
+    	}
+    	return true;
+    }
+
+    function validationToString (obj) {
+	    let str = '';
+	    for (const [p, val] of Object.entries(obj)) {
+	        str += `* ${val.join('. ')}. \n`;
+	    }
+	    return str;
+	}
+
+    const formatDates = () => {
+    	let [ formattedDob, formattedAppt ] = [ null, null ];
+    	try {
+    		formattedDob = format(new Date(dob), "yyyy-MM-dd");
+    		formattedAppt = format(new Date(apptTime), "yyyy-MM-dd HH:mm:ss");
+    	} catch (error) {
+    		//console.log(error);
+    		// setError("Error formatting dates. Please try again or contact support.");
+    	}
+    	return {
+    		'dob': formattedDob,
+    		'appt': formattedAppt
+    	};
+    }
+
     const postRegistration = () => {
+    	if(!validateFields()){
+    		return;
+    	}
+    	
     	if(!imageUploaded) {
-    		setError(true);
+    		setError("Please upload an image before registering an appointment.");
     		return
     	}
+
+    	const dates = formatDates();
     	let requestOptions = null;
     	try {
 	    	requestOptions = {
@@ -106,7 +178,7 @@ function RegistrationComponent() {
 	        			firstname:name.first,
 	        			middle:name.middle,
 	        			lastname:name.last,
-	        			dob:format(new Date(dob), "yyyy:MM:dd"),
+	        			dob:dates.dob,
 	        			phone:phone,
 	        			email:email,
 	        			address:
@@ -120,12 +192,12 @@ function RegistrationComponent() {
 	        			},
 	        			photo:uploadedImageName
 	        		},
-		        	appt_time:format(new Date(apptTime), "yyyy-MM-dd HH:mm:ss"),
+		        	appt_time: dates.appt,
 		        })
 		    };
 		} catch (error) {
 			console.error(error);
-			setError(true);
+			setError("Error while preparing the form data. Please try again or contact support.");
 		}
 		if (requestOptions) {
 		    fetch('http://localhost:3007/api/appointment', requestOptions)
@@ -133,11 +205,13 @@ function RegistrationComponent() {
 	        	.then((data) => {
 	        		console.log(data);
 	          		setSuccess(data.success);
-	          		setError(!data.success);
+	          		if(!data.success){
+	          			setError("Error while making the registration. Please try again or contact support.");
+	          		}
 	        	})
 	        	.catch(error => {
 	        		console.error(error);
-	        		setError(true);
+	        		setError("Error while making the registration. Please try again or contact support.");
 	        	});
         }
     };
@@ -153,7 +227,7 @@ function RegistrationComponent() {
 			 	      <Alert variant="danger" onClose={() => setError(false)} dismissible>
 				        <Alert.Heading>Unable to make this appointment</Alert.Heading>
 				        <p>
-				          Something went wrong.
+				          {error}
 				        </p>
 				      </Alert>
 				    }
@@ -169,31 +243,66 @@ function RegistrationComponent() {
 						<Col xs={8} sm={8} lg={5} className={"mb-2 mb-md-4"}>
 							<Form.Group controlId="formFirstName">
 								<Form.Label>First name</Form.Label>
-							    <Form.Control value={name.first} name="first" onChange={(e) => changeHandler(e,setName)} required type="text" />
+							    <Form.Control
+							    	value={name.first}
+							    	name="first"
+							    	onChange={(e) => changeHandler(e,setName)}
+							    	required
+							    	type="text"
+							    	isInvalid={errors.first_name}
+							    />
+							    <Form.Control.Feedback type="invalid">
+			                		{errors.first_name && errors.first_name.join(", ")}
+			              		</Form.Control.Feedback>
 							</Form.Group>
 						</Col>
 				    	<Col xs={4} lg={2} className={"mb-2 mb-md-4"}>
 				    		<Form.Group controlId="formMiddleName">
 				    			<Form.Label>Middle initial</Form.Label>
-							    <Form.Control value={name.middle} name="middle" onChange={(e) => changeHandler(e,setName)} type="text" placeholder="(optional)" />
+							    <Form.Control
+							    	value={name.middle}
+							    	name="middle"
+							    	onChange={(e) => changeHandler(e,setName)}
+							    	type="text"
+							    	placeholder="(optional)"
+							    	isInvalid={errors.middle_initial}
+							    />
+							    <Form.Control.Feedback type="invalid">
+			                		{errors.middle_initial && errors.middle_initial.join(", ")}
+			              		</Form.Control.Feedback>
 							</Form.Group>
 				    	</Col>
 				    	<Col sm={12} lg={5} className={"mb-2 mb-md-4"}>
 				    		<Form.Group controlId="formLastName">
 				    			<Form.Label>Last name</Form.Label>
-							    <Form.Control value={name.last} name="last" onChange={(e) => changeHandler(e,setName)} required type="text" />
+							    <Form.Control
+							    	value={name.last}
+							    	name="last"
+							    	onChange={(e) => changeHandler(e,setName)}
+							    	required
+							    	type="text"
+							    	isInvalid={errors.last_name}
+						    	/>
+						    	<Form.Control.Feedback type="invalid">
+			                		{errors.last_name && errors.last_name.join(", ")}
+			              		</Form.Control.Feedback>
 							</Form.Group>
 				    	</Col>
 					</Row>
 					<Row>
 						<Col xs={12} md={4} className={"mb-2 mb-md-4"}>
 							<Form.Group controlId="formDOB">
-								<Form.Label>Day of Birth</Form.Label>
+								<Form.Label>Date of Birth</Form.Label>
 								<DatePicker
 									inputProps = {{required:true}}
 									value={dob}
 									onChange={setDob}
+									maxDate={new Date()}
+									className={errors.date_of_birth ? 'is-invalid' : ''}
 								/>
+								<Form.Control.Feedback type="invalid">
+			                		{errors.date_of_birth && errors.date_of_birth.join(", ")}
+			              		</Form.Control.Feedback>
 							</Form.Group>
 						</Col>
 						<Col xs={12} md={4} className={"mb-2 mb-md-4"}>
@@ -203,13 +312,26 @@ function RegistrationComponent() {
 								  country={'us'}
 								  value={phone}
 								  onChange={phone => setPhone(phone)}
+								  className={errors.phone_number ? 'is-invalid' : ''}
 								/>
+								<Form.Control.Feedback type="invalid">
+			                		{errors.phone_number && errors.phone_number.join(", ")}
+			              		</Form.Control.Feedback>
 							</Form.Group>
 						</Col>
 						<Col xs={12} md={4} className={"mb-2 mb-md-4"}>
 							<Form.Group controlId="formEmail">
 								<Form.Label>Email</Form.Label>
-								<Form.Control value={email} onChange={(event) => {setEmail(event.target.value);}} required type="text" />
+								<Form.Control
+									value={email}
+									onChange={(event) => {setEmail(event.target.value);}}
+									required
+									type="text"
+									isInvalid={errors.email_address}
+								/>
+								<Form.Control.Feedback type="invalid">
+			                		{errors.email_address && errors.email_address.join(", ")}
+			              		</Form.Control.Feedback>
 							</Form.Group>
 						</Col>
 					</Row>
@@ -228,7 +350,11 @@ function RegistrationComponent() {
 			                value={address.line1}
 			                onChange={(e) => changeHandler(e,setAddress)}
 			                required
+			                isInvalid={errors.address}
 			              />
+			              <Form.Control.Feedback type="invalid">
+			              	{errors.address}
+			              </Form.Control.Feedback>
 			            </Form.Group>
 			            <Form.Group
 			              as={Col}
@@ -243,9 +369,11 @@ function RegistrationComponent() {
 			                value={address.line2}
 			                onChange={(e) => changeHandler(e,setAddress)}
 			                required
+			                placeholder="(optional)"
+			                isInvalid={errors.apartment}
 			              />
-			              <Form.Control.Feedback type="invalid" tooltip>
-			                
+			              <Form.Control.Feedback type="invalid">
+			              	{errors.apartment}
 			              </Form.Control.Feedback>
 			            </Form.Group>
 			            <Form.Group
@@ -262,10 +390,10 @@ function RegistrationComponent() {
 			                value={address.city}
 			                onChange={(e) => changeHandler(e,setAddress)}
 			                required
+			                isInvalid={errors.city}
 			              />
-
-			              <Form.Control.Feedback type="invalid" tooltip>
-			                
+			              <Form.Control.Feedback type="invalid">
+			              	{errors.city}
 			              </Form.Control.Feedback>
 			            </Form.Group>
 			            <Form.Group
@@ -274,13 +402,17 @@ function RegistrationComponent() {
 			            	md='7'
 			            	lg='3'
 			            	controlId="formCountry"
+			            	className="mb-2 mb-md-4"
 			            >	
 			            	<Form.Label>Country</Form.Label>
 					        <CountryDropdown
 					          value={address.country}
 					          onChange={(val) => regionHandler('country',val)}
-					          classes={'selectCountry mb-2 mb-md-4'}
+					          classes={`selectCountry ${errors.country ? 'is-invalid' : ''}`}
 					        />
+						    <Form.Control.Feedback type="invalid">
+				            	{errors.country}
+				            </Form.Control.Feedback>
 					    </Form.Group>
 					    <Form.Group
 			            	as={Col}
@@ -288,15 +420,19 @@ function RegistrationComponent() {
 			            	md='8'
 			            	lg='3'
 			            	controlId="formRegion"
+			            	className="mb-2 mb-md-4"
 			            >	
 					    	<Form.Label>{address.country == "United States" ? 'State / Province' : 'Region'}</Form.Label>     
 					        <RegionDropdown
 					          country={address.country} 
 					          value={address.region}
 					          onChange={(val) => regionHandler('region',val)}
-					          classes={'selectRegion mb-2 mb-md-4'}
+					          classes={`selectRegion ${errors.country ? 'is-invalid' : ''}`}
 					          defaultOptionLabel={address.country == "United States" ? 'Select State / Province' : 'Select Region'}
 					        />
+					        <Form.Control.Feedback type="invalid">
+				            	{errors.region}
+				            </Form.Control.Feedback>
 					    </Form.Group>
 			            <Form.Group
 			              as={Col}
@@ -313,9 +449,10 @@ function RegistrationComponent() {
 			                value={address.postal}
 			                onChange={(e) => changeHandler(e,setAddress)}
 			                required
+			                isInvalid={errors.postal}
 			              />
-
-			              <Form.Control.Feedback type="invalid" tooltip>
+			              <Form.Control.Feedback type="invalid">
+			                {errors.postal}
 			              </Form.Control.Feedback>
 			            </Form.Group>
 			        </Row>
@@ -343,12 +480,14 @@ function RegistrationComponent() {
 						              required
 						              name="file"
 						              onChange={handleFile}
+						              isInvalid={errors.license_image}
 						            />
-						            <Form.Control.Feedback type="invalid" tooltip>
-						            </Form.Control.Feedback>
 						            <Button variant="outline-secondary" id="button-addon2" onClick={uploadFile}>
 								      Upload Image
 								    </Button>
+								    <Form.Control.Feedback type="invalid">
+					                	{errors.license_image}
+					              	</Form.Control.Feedback>
 						        </InputGroup>
 						        :
 						        <Fragment>
@@ -372,11 +511,18 @@ function RegistrationComponent() {
 								value={apptTime}
 								onChange={setApptTime}
 								disableClock
+								className={errors.appointment_time ? 'is-invalid' : ''}
 							/>
+							<Form.Control.Feedback type="invalid">
+			                	{errors.appointment_time}
+			              	</Form.Control.Feedback>
 						</Form.Group>
 					</Row>
 				</Container>
 			    <div className={'text-center mt-5'}>
+			    	<Button className={'px-5 mx-5'} variant="primary" onClick={validateFields}>
+				    	Test Validation
+					</Button>
 					<Button className={'px-5'} variant="primary" onClick={postRegistration}>
 				    	Register
 					</Button>
