@@ -1,7 +1,9 @@
 import PageComponent from '../components/PageComponent.js';
 import AppointmentsComponent from '../components/AppointmentsComponent.js';
 
-function RegistrationPage() {
+import { useAuth0 } from "../react-auth0-spa";
+
+function AppointmentsPage() {
 	return (
 
 		<PageComponent>
@@ -15,4 +17,4 @@ function RegistrationPage() {
 	);
 }
 
-export default RegistrationPage;
+export default AppointmentsPage;

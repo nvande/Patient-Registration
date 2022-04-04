@@ -26,7 +26,8 @@ function AppointmentComponent({appt}) {
 		btnClass = "btn-warning"
 	}
 
-	let address = `${appt.patient.address.address1} ${appt.patient.address.address2} ${appt.patient.address.city}, ${appt.patient.address.region} ${appt.patient.address.country}`;
+	let address = `${appt.patient.address.address1} ${appt.patient.address.address2} ${appt.patient.address.city},`+
+		` ${appt.patient.address.region} ${appt.patient.address.country} ${appt.patient.address.postal}`;
 
 	return (
 		<Card className={"mb-5"}>

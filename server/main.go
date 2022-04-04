@@ -25,8 +25,15 @@ const (
 	db_pass = "password"
 	db_hostname = "127.0.0.1:3306"
 	db_name = "prdb"
+	admin_user = "admin"
+	admin_pass = "password"
 	server_port = "3007"
 	appt_table_name = "appts"
+)
+
+var (
+	key = []byte("secret-key")
+	store = sessions.NewCookieStore(key)
 )
 
 type Address struct {
@@ -62,15 +69,23 @@ type Response struct {
 	Data    Data   `json:"data,omitempty"`
 }
 
+type Login struct {
+	Username string `json:"username"`
+	Password string `json:"password"`
+}
+
 type Data = interface{}
 
 // DB is a global variable to hold db connection
 var DB *sql.DB
 
+
+// Generates a response struct to be returned by an endpoint
 func GenerateResponse(s bool, m string, d Data) Response {
 	return Response{s, m, d}
 }
 
+// Verifies that a byte array can marshal as json
 func (r *Response) MustMarshal() []byte {
 	j, err := json.Marshal(r)
 
@@ -81,6 +96,7 @@ func (r *Response) MustMarshal() []byte {
 	return j
 }
 
+// Check if an image extension is in the whitelist
 func CheckValidFile(ext string) bool {
 	switch ext {
 	case ".jpg", ".jpeg", ".png", ".gif":
@@ -89,21 +105,25 @@ func CheckValidFile(ext string) bool {
 	return false
 }
 
+// All purpose error checking
 func ErrorCheck(err error) {
     if err != nil {
         log.Printf(err.Error())
     }
 }
 
+// Pings the DB to make sure connection is working
 func PingDB(db *sql.DB) {
     err := db.Ping()
     ErrorCheck(err)
 }
 
+// Format string for database connection
 func dsn(dbName string) string {  
     return fmt.Sprintf("%s:%s@tcp(%s)/%s", db_user, db_pass, db_hostname, dbName)
 }
 
+// Generates the appointments table if it does not already exist
 func createAppointmentTable(db *sql.DB) error {
 	query := `CREATE TABLE IF NOT EXISTS `+appt_table_name+`(
 		id int primary key auto_increment,
@@ -140,15 +160,19 @@ func createAppointmentTable(db *sql.DB) error {
     return nil
 }
 
+// Set up our routes
 func handleRequests() {
 	// create new mux router
 	router := mux.NewRouter().StrictSlash(true)
 
-	//set up endpoints in router
+	// set up endpoints in router
 	router.HandleFunc("/api/appointment", createNewAppointment).Methods("POST")
 	router.HandleFunc("/api/appointments", returnAllAppointments)
 	router.HandleFunc("/api/appointment/{id}", returnSingleAppointment)
 	router.HandleFunc("/api/license", uploadLicense)
+
+	// set up server to serve images from the /images/{file} route
+  	router.PathPrefix("/images/").Handler(http.StripPrefix("/images/", http.FileServer(http.Dir("./images/"))))
 
 	http.Handle("/", router)
 
@@ -160,13 +184,13 @@ func main() {
 
 	db, err := sql.Open("mysql", dsn(""))
     if err != nil {
-        log.Printf("Error %s when connecting to DB\n", err)
+        log.Printf("Error %s when connecting to MySQL\n", err)
         return
     }
     PingDB(db)
     //defer db.Close()
 
-    log.Printf("Database connection established...")
+    log.Printf("MySQL connection established...")
 
 	ctx, cancelfunc := context.WithTimeout(context.Background(), 5*time.Second)
     defer cancelfunc()
@@ -181,11 +205,15 @@ func main() {
     }
     log.Printf("%d rows affected\n", no)
 
+    // created the database so close the initial connection
     db.Close()
 
+    // open up the connection to the database we just made
 	db, err = sql.Open("mysql", dsn(db_name))
 	ErrorCheck(err)
 	PingDB(db)
+
+	log.Printf("Database connection established...")
 
 	// close when the main function has finished execution
 	defer db.Close()
@@ -197,13 +225,73 @@ func main() {
         return
     }
 
+    gs := NewManager("memory","prsessionid",3600)
+
+    // Assign globals now that startup has finished
 	DB = db
+	GS = gs
 
 	handleRequests()
 }
 
+func logInAdmin(w http.ResponseWriter, r *http.Request){
+	log.Println("Endpoint Hit: logInAdmin")
+
+	session, _ := store.Get(r, "pr-token")
+
+    // read from the body of the POST request
+	reqBody, _ := ioutil.ReadAll(r.Body)
+
+	// unmarshal into Login struct
+	var login Login
+	var err = json.Unmarshal(reqBody, &appt)
+
+	if err != nil {
+        fmt.Println("unmarshalling error ", err)
+        return
+    }
+
+    // allow CORS
+	w.Header().Set("Content-Type", "text/html; charset=utf-8")
+	w.Header().Set("Access-Control-Allow-Origin", "*")
+
+    if(Login.username == admin_user && Login.password == admin_pass) {
+    	// Set user as authenticated
+	    session.Values["authenticated"] = true
+	    session.Save(r, w)
+
+        msg := "Admin logged in"
+	    log.Println(msg);
+	    res := GenerateResponse(true, msg, nil)
+    } else {
+    	msg := "Admin log in attempt failed"
+	    log.Println(msg);
+	    res := GenerateResponse(false, msg, nil)
+    }
+
+    json.NewEncoder(w).Encode(res)
+}
+
+func logOutAdmin(w http.ResponseWriter, r *http.Request) {
+	log.Println("Endpoint Hit: logOutAdmin")
+
+    session, _ := store.Get(r, "pr-token")
+
+    // Revoke users authentication
+    session.Values["authenticated"] = false
+    session.Save(r, w)
+}
+
 func returnAllAppointments(w http.ResponseWriter, r *http.Request){
 	log.Println("Endpoint Hit: returnAllAppointments")
+
+	session, _ := store.Get(r, "pr-token")
+
+    // Check if user is authenticated
+    if auth, ok := session.Values["authenticated"].(bool); !ok || !auth {
+        http.Error(w, "Forbidden", http.StatusForbidden)
+        return
+    }
 
 	// Execute the query
     results, err := DB.Query(`SELECT id,
@@ -274,6 +362,14 @@ func returnAllAppointments(w http.ResponseWriter, r *http.Request){
 
 func returnSingleAppointment(w http.ResponseWriter, r *http.Request){
 	log.Println("Endpoint Hit: returnSingleAppointment")
+
+	session, _ := store.Get(r, "pr-token")
+
+    // Check if user is authenticated
+    if auth, ok := session.Values["authenticated"].(bool); !ok || !auth {
+        http.Error(w, "Forbidden", http.StatusForbidden)
+        return
+    }
 
 	vars := mux.Vars(r)
 	key := vars["id"]

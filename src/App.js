@@ -4,6 +4,9 @@ import RegistrationPage from './pages/RegistrationPage';
 import AppointmentsPage from './pages/AppointmentsPage';
 import './App.css';
 
+import { useAuth0 } from "./react-auth0-spa";
+import { useState } from 'react';
+
 import {
   BrowserRouter as Router,
   Routes,
@@ -12,6 +15,15 @@ import {
 } from "react-router-dom";
 
 function App() {
+  const [user, setUser] = useState();
+
+  const { isAuthenticated } = useAuth0();
+  const { loading } = useAuth0();
+
+  if (loading) {
+    return <div>Loading...</div>;
+  }
+
   return (
     <div className="App">
       <Router>

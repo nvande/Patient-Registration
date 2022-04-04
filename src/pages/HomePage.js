@@ -1,4 +1,5 @@
 import PageComponent from '../components/PageComponent.js';
+import LoginComponent from '../components/LoginComponent.js'
 
 import { Button, Container, Col, Row } from 'react-bootstrap';
 import { Link } from 'react-router-dom';
@@ -9,23 +10,23 @@ function HomePage() {
 			<div className="mt-5">
 				<Container>
 					<Row>
-						<Col>
-							<h1>
+						<Col className="text-center">
+							<h1 className="mt-5">
 								Patient Registration
 							</h1>
 							<p>
 								New patient?
 							</p>
-							<Link to="/register"><Button>Register for an appointment</Button></Link>
+							<Link to="/register"><Button size="lg">Register for an appointment</Button></Link>
 						</Col>
-						<Col>
-							<h1>
-								Admin
-							</h1>
+						<Col md="4">
+							<h3>
+								Admin Login
+							</h3>
 							<p>
-								Check which appointments have already been made.
+								Log in here to check which appointments have already been made.
 							</p>
-							<Link to="/appointments"><Button>View Appointments</Button></Link>
+							<LoginComponent/>
 						</Col>
 					</Row>
 				</Container>
