@@ -12,16 +12,24 @@ html, .App {
   text-decoration: none;
 }
 
-.pageHeader a h1 {
+.pageHeader .pageTitle {
   display: inline-block;
 }
 
-.pageHeader a:hover h1{
+.pageHeader a:hover .pageTitle{
   color: #eee!important;
 }
 
 .pageHeader .userPhoto {
-  height: 50px;
+  height: 46px;
+}
+
+.loadingComponent .loadingIcon {
+  color: red;
+  height: 200px;
+  font-size: 36px;
+  transform: scale(1);
+  animation: pulse .5s infinite;
 }
 
 .img-responsive {
@@ -119,6 +127,20 @@ html, .App {
 .uploadedImage img{
   max-height: 200px;
   padding:  10px;
+}
+
+@keyframes pulse {
+  0% {
+    transform: scale(0.9);
+  }
+
+  70% {
+    transform: scale(1);
+  }
+
+  100% {
+    transform: scale(0.9);
+  }
 }
 
 

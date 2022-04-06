@@ -1,4 +1,5 @@
 import AppointmentComponent from '../components/AppointmentComponent.js';
+import LoadingComponent from '../components/LoadingComponent';
 
 import { useState, useEffect } from 'react';
 import { Button, Row } from 'react-bootstrap';
@@ -9,6 +10,7 @@ function AppointmentsComponent() {
 	const { getTokenSilently, loading, user, logout, isAuthenticated } = useAuth0();
 
 	const [appts, setAppts] = useState([]);
+	const [loaded, setLoaded] = useState(false);
 
 
 	useEffect(() => {
@@ -31,10 +33,13 @@ function AppointmentsComponent() {
           	setAppts(data.data);
         })
         .catch(console.log)
+        .finally(() => {
+        	setLoaded(true);
+        });
 	};
 
-	if (loading) {
-	    return <div className={"text-center"}>Loading...</div>;
+	if (loading || !loaded) {
+	    return <LoadingComponent/>;
 	}
 
 	if (!user) {

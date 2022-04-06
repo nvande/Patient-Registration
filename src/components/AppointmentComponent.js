@@ -51,7 +51,7 @@ function AppointmentComponent({appt, isFull, multiple}) {
 				    	</Col>
 				    	:
 				    	<Col>
-				    		<img height="200" className={"float-end"} src={`${config.server_url}/images/${appt.patient.photo}`}/>
+				    		<img height="200" className={"float-end"} src={`${config.server_url}/images/license/${appt.patient.photo}`}/>
 				    	</Col>
 					}
 				  </Row>

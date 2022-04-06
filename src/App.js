@@ -3,6 +3,8 @@ import HomePage from './pages/HomePage.js';
 import RegistrationPage from './pages/RegistrationPage';
 import AppointmentsPage from './pages/AppointmentsPage';
 import AppointmentPage from './pages/AppointmentPage';
+import SuccessPage from './pages/SuccessPage';
+import LoadingPage from './pages/LoadingPage';
 import './App.css';
 
 import { useAuth0 } from "./react-auth0-spa";
@@ -22,7 +24,13 @@ function App() {
   }, [isAuthenticated]);
 
   if (loading) {
-    return <div>Loading...</div>;
+    return (
+      <div className="App">
+        <Router>
+          <LoadingPage/>
+        </Router>
+    </div>
+    );
   }
 
   return (
@@ -33,6 +41,7 @@ function App() {
           <Route path="/register" element={<RegistrationPage/>}/>
           <Route path="/appointments" element={<AppointmentsPage/>}/>
           <Route path="/appointment/:id" element={<AppointmentPage/>}/>
+          <Route path="/success" element={<SuccessPage/>}/>
         </Routes>
       </Router>
     </div>

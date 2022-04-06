@@ -68,3 +68,20 @@ To create an appointment, simply navigate to the homepage and click 'Register fo
 
 To view created appointments, click 'Sign in with Auth0' from the homepage instead and create an account through the Auth0 registation process.
 Once you are registered with the site, you can click 'View Appointments' to see a list of all upcoming and past appointments, as well as click on an individual appointment to see more details
+
+## Securing the Application
+
+With Auth0, it's relatively easy to make rules to determine which users have access to the secure side of the application.
+
+For example, we can easily create a whitelist to ensure that only users with accounts whose email addresses match that whitelist can create accounts.
+
+To do this:
+* First, log in to Auth0 and click on the Auth Pipeline section of the Dashboard.
+* Next, click on "Rules"
+* Click "+ Create" on the upper-right
+* Select **Whitelist** from the **Access Control** section of the rules templates
+* Replace the `['user1@example.com', 'user2@example.com']` array values with whichever emails you want to have access to the secure side of the application
+* Click "Save changes"
+
+It's that easy. Now, if you try to log in to the application or hit the api with a jwt token that doesn't match a user on the whitelist, you will get only get back an unauthorized message
+

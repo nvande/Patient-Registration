@@ -1,5 +1,6 @@
 import PageComponent from '../components/PageComponent.js';
 import AppointmentComponent from '../components/AppointmentComponent.js';
+import LoadingPage from '../pages/LoadingPage';
 
 import { useAuth0 } from "../react-auth0-spa";
 import { useParams } from "react-router-dom";
@@ -36,8 +37,8 @@ function AppointmentPage() {
 
 	const dateString = appt ? format(parseISO(appt.appt_time), "MMMM do, yyyy 'at' h:mm (a)") : "Loading...";
 
-	if (loading) {
-	    return <div className={"text-center"}>Loading...</div>;
+	if (loading || !appt) {
+	    return <LoadingPage/>;
 	}
 
 	return (

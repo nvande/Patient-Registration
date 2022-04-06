@@ -1,6 +1,7 @@
 import { useState, Fragment } from 'react';
 
 import { Container, Row, Col, Button, Form, Alert, InputGroup } from 'react-bootstrap';
+import { Navigate } from 'react-router-dom';
 import DateTimePicker from 'react-datetime-picker';
 import DatePicker from 'react-date-picker';
 import PhoneInput from 'react-phone-input-2';
@@ -16,14 +17,9 @@ function RegistrationComponent() {
 	const validate = require("validate.js");
 
 	validate.extend(validate.validators.datetime, {
-	  // The value is guaranteed not to be null or undefined but otherwise it
-	  // could be anything.
 	  parse: function(value, options) {
-	  	console.log(value);
-	  	console.log(getTime(parseISO(value)));
 	    return getTime(parseISO(value));
 	  },
-	  // Input is a unix timestamp
 	  format: function(value, options) {
 	    var format = options.dateOnly ? "yyyy-MM-dd" : "yyyy-MM-dd hh:mm:ss";
 	    return format(value, format);
@@ -55,6 +51,7 @@ function RegistrationComponent() {
 	const [error, setError] = useState(false);
 	const [errors, setErrors] = useState([]);
 	const [success, setSuccess] = useState(false);
+	const [redirect, setRedirect] = useState(null);
 	const [validation, setValidation] = useState(undefined);
 
 	const handleFile = e => {
@@ -68,6 +65,10 @@ function RegistrationComponent() {
 
     const regionHandler = (name, value) => {
     	setAddress(prev => ({...prev, [name]: value}));
+    };
+
+    const redirectSuccess = (time) => {
+    	setRedirect(`/success?time=${time}`);
     };
 
     const uploadFile = () => {
@@ -203,10 +204,10 @@ function RegistrationComponent() {
 		    fetch('http://localhost:3007/api/appointment', requestOptions)
 	        	.then(res => res.json())
 	        	.then((data) => {
-	        		console.log(data);
-	          		setSuccess(data.success);
 	          		if(!data.success){
 	          			setError("Error while making the registration. Please try again or contact support.");
+	          		} else {
+	          			redirectSuccess(data.data.appt_time);
 	          		}
 	        	})
 	        	.catch(error => {
@@ -216,7 +217,11 @@ function RegistrationComponent() {
         }
     };
 
-    
+    if(redirect) {
+    	return (
+    		<Navigate to={redirect}/>
+    	);
+    }
 
 	return (
 		<div>
