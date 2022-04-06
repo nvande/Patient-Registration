@@ -541,7 +541,7 @@ func uploadLicense(w http.ResponseWriter, r *http.Request) {
     uploadedName := strings.Replace(uuid.NewString(), "-", "", -1) + fileExt
 
     // Create file
-	dst, err := os.Create("images/"+uploadedName)
+	dst, err := os.Create("images/license/"+uploadedName)
 	defer dst.Close()
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
