@@ -1,6 +1,7 @@
 import { Card, Button, ListGroup, ListGroupItem, Container, Row, Col } from 'react-bootstrap';
 
 import { format, parseISO } from "date-fns";
+import parsePhoneNumber from 'libphonenumber-js';
 import { FaUser, FaClock } from 'react-icons/fa';
 import { Link } from 'react-router-dom';
 import config from "../config.json";
@@ -31,8 +32,7 @@ function AppointmentComponent({appt, isFull, multiple}) {
 	let address = `${appt.patient.address.address1} ${appt.patient.address.address2} ${appt.patient.address.city},`+
 		` ${appt.patient.address.region} ${appt.patient.address.country} ${appt.patient.address.postal}`;
 
-	console.log(appt);
-
+	const phoneNumber = parsePhoneNumber(`+${appt.patient.phone}`);
 	return (
 		<Col lg={!isFull && multiple ? "6" : "12"}>
 		<Card className={"mb-5"} >
@@ -42,7 +42,7 @@ function AppointmentComponent({appt, isFull, multiple}) {
 				  <Row>
 				    <Col>
 				    	<Card.Title as={isFull ? "h1" : "h4"}>{appt.patient.lastname}, {appt.patient.firstname} {appt.patient.middle}{appt.patient.middle.length > 0 ? "." : ""}</Card.Title>
-						<Card.Subtitle className="mb-2 text-muted">{appt.patient.phone}</Card.Subtitle>
+						<Card.Subtitle className="mb-2 text-muted">{phoneNumber.formatInternational()}</Card.Subtitle>
 				    </Col>
 				    {!isFull ?
 				    	<Col>

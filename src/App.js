@@ -19,7 +19,6 @@ function App() {
   const { isAuthenticated, user, loading } = useAuth0();
 
   useEffect(() => {
-    console.log(user);
   }, [isAuthenticated]);
 
   if (loading) {

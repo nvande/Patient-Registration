@@ -8,9 +8,9 @@ function AppointmentsPage() {
 
 		<PageComponent>
 			<div className="mt-5">
-				<h3 className={"text-center mb-5"}>
+				<h1 className={"text-center mb-5"}>
 					Appointments
-				</h3>
+				</h1>
 			</div>
 			<AppointmentsComponent/>
 		</PageComponent>
