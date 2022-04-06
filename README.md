@@ -56,4 +56,15 @@ In another terminal window, run:
 ### `cd server`
 ### `go run main.go`
 
-This runs the server application which the React frontend will communicate with and which serves Appointment data and License images for the application .
+This runs the server application which the React frontend will communicate with and which serves Appointment data and License images for the application.
+
+## Using the Application
+
+There are two main workflows in the Patient Registration Application
+1. Creating Appointments (any unauthenicated user can do this)
+2. Viewing Appointments (only a authenticated user can do this)
+
+To create an appointment, simply navigate to the homepage and click 'Register for an Appointment' and follow the steps listed on the form
+
+To view created appointments, click 'Sign in with Auth0' from the homepage instead and create an account through the Auth0 registation process.
+Once you are registered with the site, you can click 'View Appointments' to see a list of all upcoming and past appointments, as well as click on an individual appointment to see more details
