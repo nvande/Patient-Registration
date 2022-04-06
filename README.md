@@ -11,23 +11,23 @@ Thankfully, Auth0 is extremely easy to set up.
 
 First, navigate to https://auth0.com/signup and create a free account.
 
-Once you are logged in, go to the **Applications** section of the dashboard and click "+ Create Application"
+1. Once you are logged in, go to the **Applications** section of the dashboard and click "+ Create Application"
 * Select "Single Page Web Applications" from the modal popup and name the Application something like "Patient Registration" (name is up to you)
 * Click "Create"
 * Click on "Settings"
 * Scroll down and fill in Allowed Callback URLs, Allowed Logout URLs, and Allowed Web Origins with http://localhost:3000
 * Click "Save changes"
 
-Now, scroll up, and copy some values into the React App:
+2. Now, scroll up, and copy some values into the React App:
 * Copy **Client ID** and **Domain** into the `config.json` file in the `src` directory
 
-Next, set up the Auth0 API by going to the **APIs** section of the dashboard and clicking "+ Create API"
+3. Next, set up the Auth0 API by going to the **APIs** section of the dashboard and clicking "+ Create API"
 * Name the API whatever you like (ex. Patient Registration API)
 * Enter a URL identifier (this is not a real URL, and Auth0 won't ever connect to it, so it can be whatever you like ex: https://patient-registration)
 * Leave the signing Algorithm as RS256
 * Click "Create"
 
-Now, click on **Quick Start** and copy some values from the C# code into the server file:
+4. Finally, click on **Quick Start** and copy some values from the C# code into the server file:
 * Copy the value for **options.Audience** into the value for **auth0_identifier** in the `main.go` file in the `server` directory
 * Copy the value for **options.Authority** into the value for **auth0_api_domain** in the `main.go` file in the `server` directory
 
@@ -39,7 +39,7 @@ Make sure MySQL is installed and running on your machine.
 
 If you are on a Mac, you can go to Preferences > MySQL to Start / Stop the MySQL server
 
-* Finally, copy your MySQL Username and Password into the values **db_user** and **db_pass** in the `main.go` file in the `server` directory
+* Copy your MySQL Username and Password into the values **db_user** and **db_pass** in the `main.go` file in the `server` directory
 
 With the configuration finished, you are ready to launch the application.
 
