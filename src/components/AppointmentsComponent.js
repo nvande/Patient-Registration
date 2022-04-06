@@ -1,13 +1,15 @@
 import AppointmentComponent from '../components/AppointmentComponent.js';
 
 import { useState, useEffect } from 'react';
-import { Button } from 'react-bootstrap';
+import { Button, Row } from 'react-bootstrap';
 import { useAuth0 } from "../react-auth0-spa";
+import config from "../config.json";
 
 function AppointmentsComponent() {
 	const { getTokenSilently, loading, user, logout, isAuthenticated } = useAuth0();
 
 	const [appts, setAppts] = useState([]);
+
 
 	useEffect(() => {
 		if (isAuthenticated) {
@@ -15,8 +17,15 @@ function AppointmentsComponent() {
 		}
 	}, [user]);
 
-	const fetchAppointments = () => {
-		fetch('http://localhost:3007/api/appointments')
+	const fetchAppointments = async() => {
+		const token = await getTokenSilently();
+		const options = {
+			method: "GET",
+			headers: {
+				Authorization: `Bearer ${token}`
+			}
+		}
+		fetch(`${config.server_url}/api/appointments`, options)
         .then(res => res.json())
         .then((data) => {
           	setAppts(data.data);
@@ -33,17 +42,16 @@ function AppointmentsComponent() {
 	}
 
 	return (
-		<div>
-			{isAuthenticated && <Button onClick={() => logout()}>Log out</Button>}
+		<Row>
 			{appts && appts.map((appt) => (
-				<AppointmentComponent appt={appt} key={appt.id}/>
+				<AppointmentComponent appt={appt} key={appt.id} isFull={false} multiple={appts.length > 1}/>
 			))}
 			{!appts &&
 				<p className={'text-center'}>
 					No upcoming or past appointments. When a patient makes an appointment, it will show up here.
 				</p>
 			}
-		</div>
+		</Row>
 	)
 	
 }

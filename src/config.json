@@ -1,0 +1,6 @@
+{
+  "auth_domain": "dev--9j1bgj9.us.auth0.com",
+  "auth_clientId": "Ch2riwTtYTAUum9eMFaWRtj1kZ8cB9Ua",
+  "auth_audience": "https://patient-registration",
+  "server_url": "http://localhost:3007"
+}

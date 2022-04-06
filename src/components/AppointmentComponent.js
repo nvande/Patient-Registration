@@ -2,8 +2,10 @@ import { Card, Button, ListGroup, ListGroupItem, Container, Row, Col } from 'rea
 
 import { format, parseISO } from "date-fns";
 import { FaUser, FaClock } from 'react-icons/fa';
+import { Link } from 'react-router-dom';
+import config from "../config.json";
 
-function AppointmentComponent({appt}) {
+function AppointmentComponent({appt, isFull, multiple}) {
 	var date1 = new Date();
 	var date2 = new Date(appt.appt_time);
 
@@ -29,19 +31,29 @@ function AppointmentComponent({appt}) {
 	let address = `${appt.patient.address.address1} ${appt.patient.address.address2} ${appt.patient.address.city},`+
 		` ${appt.patient.address.region} ${appt.patient.address.country} ${appt.patient.address.postal}`;
 
+	console.log(appt);
+
 	return (
-		<Card className={"mb-5"}>
+		<Col lg={!isFull && multiple ? "6" : "12"}>
+		<Card className={"mb-5"} >
 		<Card.Header as="h5" className={headerClass}><span className={"badge badge-pill badge-light float-right"}><FaClock className="iconInline"/> {text}</span></Card.Header>
 			<Card.Body>
 				<Container>
 				  <Row>
 				    <Col>
-				    	<Card.Title as="h2">{appt.patient.lastname}, {appt.patient.firstname}</Card.Title>
+				    	<Card.Title as={isFull ? "h1" : "h4"}>{appt.patient.lastname}, {appt.patient.firstname} {appt.patient.middle}{appt.patient.middle.length > 0 ? "." : ""}</Card.Title>
 						<Card.Subtitle className="mb-2 text-muted">{appt.patient.phone}</Card.Subtitle>
 				    </Col>
-				    <Col>
-				    	<h4 className={"text-end"}>{format(parseISO(appt.appt_time), "MMMM do, yyyy 'at' H:ma")}</h4>
-				    </Col>
+				    {!isFull ?
+				    	<Col>
+				    		<h4 className={"text-end"}>{format(parseISO(appt.appt_time), "MMMM do, yyyy")}</h4>
+				    		<h4 className={"text-end"}>{format(parseISO(appt.appt_time), "'@' h:mm (a)")}</h4>
+				    	</Col>
+				    	:
+				    	<Col>
+				    		<img height="200" className={"float-end"} src={`${config.server_url}/images/${appt.patient.photo}`}/>
+				    	</Col>
+					}
 				  </Row>
 			</Container>
 			</Card.Body>
@@ -50,10 +62,18 @@ function AppointmentComponent({appt}) {
 			      <ListGroupItem><b>Address:</b> {address}</ListGroupItem>
 			      <ListGroupItem><b>Email:</b> {appt.patient.email}</ListGroupItem>
 			</ListGroup>
-			<Card.Body className={"text-end"}>
-				<Button className={btnClass} size="lg">View Appointment</Button>
-			</Card.Body>
+			{!isFull &&
+				<Card.Body className={"text-end"}>
+					<Link to={`/appointment/`+appt.id}><Button className={btnClass}>View Appointment</Button></Link>
+				</Card.Body>
+			}
 		</Card>
+		{isFull &&
+			<div className={"text-center"}>
+				<Link to={'/appointments/'}><Button size="lg">Return to Appointments List</Button></Link>
+			</div>
+		}
+		</Col>
 	)
 	
 }

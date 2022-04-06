@@ -2,10 +2,11 @@ import logo from './logo.svg';
 import HomePage from './pages/HomePage.js';
 import RegistrationPage from './pages/RegistrationPage';
 import AppointmentsPage from './pages/AppointmentsPage';
+import AppointmentPage from './pages/AppointmentPage';
 import './App.css';
 
 import { useAuth0 } from "./react-auth0-spa";
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 
 import {
   BrowserRouter as Router,
@@ -15,10 +16,11 @@ import {
 } from "react-router-dom";
 
 function App() {
-  const [user, setUser] = useState();
+  const { isAuthenticated, user, loading } = useAuth0();
 
-  const { isAuthenticated } = useAuth0();
-  const { loading } = useAuth0();
+  useEffect(() => {
+    console.log(user);
+  }, [isAuthenticated]);
 
   if (loading) {
     return <div>Loading...</div>;
@@ -31,6 +33,7 @@ function App() {
           <Route exact path="/" element={<HomePage/>}/>
           <Route path="/register" element={<RegistrationPage/>}/>
           <Route path="/appointments" element={<AppointmentsPage/>}/>
+          <Route path="/appointment/:id" element={<AppointmentPage/>}/>
         </Routes>
       </Router>
     </div>

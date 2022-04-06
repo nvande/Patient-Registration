@@ -520,9 +520,6 @@ function RegistrationComponent() {
 					</Row>
 				</Container>
 			    <div className={'text-center mt-5'}>
-			    	<Button className={'px-5 mx-5'} variant="primary" onClick={validateFields}>
-				    	Test Validation
-					</Button>
 					<Button className={'px-5'} variant="primary" size="lg" onClick={postRegistration}>
 				    	Register
 					</Button>

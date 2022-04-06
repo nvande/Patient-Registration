@@ -5,7 +5,7 @@ import 'bootstrap/dist/css/bootstrap.min.css';
 import App from './App';
 import reportWebVitals from './reportWebVitals';
 import { Auth0Provider } from "./react-auth0-spa";
-import config from "./auth_config.json";
+import config from "./config.json";
 import history from "./history";
 
 // Routes the user to the right place after login
@@ -20,10 +20,11 @@ const onRedirectCallback = appState => {
 ReactDOM.render(
   <React.StrictMode>
     <Auth0Provider
-      domain={config.domain}
-      client_id={config.clientId}
+      domain={config.auth_domain}
+      client_id={config.auth_clientId}
       redirect_uri={window.location.origin}
       onRedirectCallback={onRedirectCallback}
+      audience={config.auth_audience}
     >
       <App />
     </Auth0Provider>

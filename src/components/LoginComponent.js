@@ -1,43 +1,18 @@
 import { useState } from 'react';
 import { Button, Form } from 'react-bootstrap';
+import { useAuth0 } from "../react-auth0-spa";
 
 function LoginComponent() {
 	const [username, setUsername] = useState('');
 	const [password, setPassword] = useState('');
 
 	const [errors, setErrors] = useState([]);
+	const { isAuthenticated, loginWithRedirect, loginWithPopup, logout } = useAuth0();
 
 	return (
 		<div>
-			<Form.Group controlId="formUsername">
-				<Form.Label>Username</Form.Label>
-			    <Form.Control
-			    	value={username}
-			    	name="username"
-			    	onChange={(e) => setUsername(e.target.value)}
-			    	required
-			    	type="text"
-			    	isInvalid={errors.first_name}
-			    />
-			    <Form.Control.Feedback type="invalid">
-	        		{errors.first_name && errors.first_name.join(", ")}
-	      		</Form.Control.Feedback>
-			</Form.Group>
-			<Form.Group controlId="formPassword">
-				<Form.Label>Password</Form.Label>
-			    <Form.Control
-			    	value={password}
-			    	name="password"
-			    	onChange={(e) => setPassword(e.target.value)}
-			    	type="password"
-			    	isInvalid={errors.middle_initial}
-			    />
-			    <Form.Control.Feedback type="invalid">
-	        		{errors.middle_initial && errors.middle_initial.join(", ")}
-	      		</Form.Control.Feedback>
-			</Form.Group>
-			<div className="d-grid">
-				<Button className={"mt-4"}>Login</Button>
+			<div className="d-grid gap-2">
+				<Button onClick={()=> loginWithRedirect({})}> Sign in with Auth0 </Button>
 			</div>
 		</div>
 	);

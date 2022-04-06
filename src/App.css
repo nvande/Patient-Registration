@@ -20,6 +20,10 @@ html, .App {
   color: #eee!important;
 }
 
+.pageHeader .userPhoto {
+  height: 50px;
+}
+
 .prBody {
   position: relative;
   background-color: #fff;

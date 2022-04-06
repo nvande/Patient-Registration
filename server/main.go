@@ -4,6 +4,7 @@ import (
 	"strconv"
 	"sort"
 	"context"
+	"errors"
 	"fmt"
 	"log"
 	"time"
@@ -13,8 +14,11 @@ import (
 	"path/filepath"
 	"net/http"
 	"encoding/json"
-	"github.com/google/uuid"
+	"github.com/auth0/go-jwt-middleware"
+	"github.com/form3tech-oss/jwt-go"
 	"github.com/gorilla/mux"
+	"github.com/rs/cors"
+	"github.com/google/uuid"
 	"io/ioutil"
 	"database/sql"
 	_ "github.com/go-sql-driver/mysql"
@@ -25,15 +29,10 @@ const (
 	db_pass = "password"
 	db_hostname = "127.0.0.1:3306"
 	db_name = "prdb"
-	admin_user = "admin"
-	admin_pass = "password"
 	server_port = "3007"
+	auth0_identifier = "https://patient-registration"
+	auth0_api_domain = "https://dev--9j1bgj9.us.auth0.com/"
 	appt_table_name = "appts"
-)
-
-var (
-	key = []byte("secret-key")
-	store = sessions.NewCookieStore(key)
 )
 
 type Address struct {
@@ -69,16 +68,23 @@ type Response struct {
 	Data    Data   `json:"data,omitempty"`
 }
 
-type Login struct {
-	Username string `json:"username"`
-	Password string `json:"password"`
+type Jwks struct {
+    Keys []JSONWebKeys `json:"keys"`
+}
+
+type JSONWebKeys struct {
+    Kty string   `json:"kty"`
+    Kid string   `json:"kid"`
+    Use string   `json:"use"`
+    N   string   `json:"n"`
+    E   string   `json:"e"`
+    X5c []string `json:"x5c"`
 }
 
 type Data = interface{}
 
 // DB is a global variable to hold db connection
 var DB *sql.DB
-
 
 // Generates a response struct to be returned by an endpoint
 func GenerateResponse(s bool, m string, d Data) Response {
@@ -165,18 +171,72 @@ func handleRequests() {
 	// create new mux router
 	router := mux.NewRouter().StrictSlash(true)
 
+	jwtMiddleware := jwtmiddleware.New(jwtmiddleware.Options {
+	    ValidationKeyGetter: func(token *jwt.Token) (interface{}, error) {
+		    // Verify 'aud' claim
+		      
+		    // we need to check the the audience, the auth0 identifier
+		    aud := auth0_identifier
+		    // convert audience in the JWT token to []interface{} if multiple audiences
+			convAud, ok := token.Claims.(jwt.MapClaims)["aud"].([]interface{})
+			if !ok {
+				// convert audience in the JWT token to string if only 1 audience
+				strAud, ok := token.Claims.(jwt.MapClaims)["aud"].(string)
+				// return error if can't convert to string
+				if !ok {
+					return token, errors.New("Invalid audience.")
+				}
+				// return error if audience doesn't match
+				if strAud != aud {
+					return token, errors.New("Invalid audience.")
+				}
+			} else {
+				for _, v := range convAud {
+					if v == aud {
+					      break
+					} else {
+						return token, errors.New("Invalid audience.")
+					}
+				}
+			}
+
+		    // and then we check the auth0 issuer
+		    iss := auth0_api_domain
+		    checkIss := token.Claims.(jwt.MapClaims).VerifyIssuer(iss, false)
+		    if !checkIss {
+		    	return token, errors.New("Invalid issuer.")
+		    }
+		      
+		    // generate the pem certificate
+		    cert, err := getPemCert(token)
+		    if err != nil {
+		    	panic(err.Error())
+		    }
+
+		    // run RSA from the pem cert and check the result
+		    result, _ := jwt.ParseRSAPublicKeyFromPEM([]byte(cert))
+		    return result, nil
+	    },
+	    SigningMethod: jwt.SigningMethodRS256,
+	})
+
 	// set up endpoints in router
 	router.HandleFunc("/api/appointment", createNewAppointment).Methods("POST")
-	router.HandleFunc("/api/appointments", returnAllAppointments)
-	router.HandleFunc("/api/appointment/{id}", returnSingleAppointment)
-	router.HandleFunc("/api/license", uploadLicense)
+	router.Handle("/api/appointments", jwtMiddleware.Handler(AppointmentsHandler))
+	router.Handle("/api/appointment/{id}", jwtMiddleware.Handler(AppointmentHandler))
+	router.HandleFunc("/api/license", uploadLicense).Methods("POST")
 
 	// set up server to serve images from the /images/{file} route
-  	router.PathPrefix("/images/").Handler(http.StripPrefix("/images/", http.FileServer(http.Dir("./images/"))))
+  	router.PathPrefix("/images/").Handler(http.StripPrefix("/images/", http.FileServer(http.Dir("images"))))
 
 	http.Handle("/", router)
 
-	log.Fatal(http.ListenAndServe(":"+server_port, nil))
+	corsWrapper := cors.New(cors.Options{
+        AllowedMethods: []string{"GET", "POST"},
+        AllowedHeaders: []string{"Content-Type", "Origin", "Accept", "*"},
+  	})
+
+	log.Fatal(http.ListenAndServe(":"+server_port, corsWrapper.Handler(router)))
 }
 
 func main() {
@@ -225,73 +285,14 @@ func main() {
         return
     }
 
-    gs := NewManager("memory","prsessionid",3600)
-
     // Assign globals now that startup has finished
 	DB = db
-	GS = gs
 
 	handleRequests()
 }
 
-func logInAdmin(w http.ResponseWriter, r *http.Request){
-	log.Println("Endpoint Hit: logInAdmin")
-
-	session, _ := store.Get(r, "pr-token")
-
-    // read from the body of the POST request
-	reqBody, _ := ioutil.ReadAll(r.Body)
-
-	// unmarshal into Login struct
-	var login Login
-	var err = json.Unmarshal(reqBody, &appt)
-
-	if err != nil {
-        fmt.Println("unmarshalling error ", err)
-        return
-    }
-
-    // allow CORS
-	w.Header().Set("Content-Type", "text/html; charset=utf-8")
-	w.Header().Set("Access-Control-Allow-Origin", "*")
-
-    if(Login.username == admin_user && Login.password == admin_pass) {
-    	// Set user as authenticated
-	    session.Values["authenticated"] = true
-	    session.Save(r, w)
-
-        msg := "Admin logged in"
-	    log.Println(msg);
-	    res := GenerateResponse(true, msg, nil)
-    } else {
-    	msg := "Admin log in attempt failed"
-	    log.Println(msg);
-	    res := GenerateResponse(false, msg, nil)
-    }
-
-    json.NewEncoder(w).Encode(res)
-}
-
-func logOutAdmin(w http.ResponseWriter, r *http.Request) {
-	log.Println("Endpoint Hit: logOutAdmin")
-
-    session, _ := store.Get(r, "pr-token")
-
-    // Revoke users authentication
-    session.Values["authenticated"] = false
-    session.Save(r, w)
-}
-
-func returnAllAppointments(w http.ResponseWriter, r *http.Request){
+var AppointmentsHandler = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 	log.Println("Endpoint Hit: returnAllAppointments")
-
-	session, _ := store.Get(r, "pr-token")
-
-    // Check if user is authenticated
-    if auth, ok := session.Values["authenticated"].(bool); !ok || !auth {
-        http.Error(w, "Forbidden", http.StatusForbidden)
-        return
-    }
 
 	// Execute the query
     results, err := DB.Query(`SELECT id,
@@ -358,18 +359,10 @@ func returnAllAppointments(w http.ResponseWriter, r *http.Request){
 	w.Header().Set("Access-Control-Allow-Origin", "*")
 
 	json.NewEncoder(w).Encode(res)
-}
+})
 
-func returnSingleAppointment(w http.ResponseWriter, r *http.Request){
+var AppointmentHandler = http.HandlerFunc(func (w http.ResponseWriter, r *http.Request) {
 	log.Println("Endpoint Hit: returnSingleAppointment")
-
-	session, _ := store.Get(r, "pr-token")
-
-    // Check if user is authenticated
-    if auth, ok := session.Values["authenticated"].(bool); !ok || !auth {
-        http.Error(w, "Forbidden", http.StatusForbidden)
-        return
-    }
 
 	vars := mux.Vars(r)
 	key := vars["id"]
@@ -427,7 +420,7 @@ func returnSingleAppointment(w http.ResponseWriter, r *http.Request){
 	w.Header().Set("Access-Control-Allow-Origin", "*")
 
 	json.NewEncoder(w).Encode(res)
-}
+})
 
 func createNewAppointment(w http.ResponseWriter, r *http.Request) {
 	log.Println("Endpoint Hit: createNewAppointment")
@@ -567,3 +560,34 @@ func uploadLicense(w http.ResponseWriter, r *http.Request) {
 
 	json.NewEncoder(w).Encode(res)
 }
+
+func getPemCert(token *jwt.Token) (string, error) {
+    cert := ""
+    resp, err := http.Get(auth0_api_domain+".well-known/jwks.json")
+
+    if err != nil {
+        return cert, err
+    }
+    defer resp.Body.Close()
+
+    var jwks = Jwks{}
+    err = json.NewDecoder(resp.Body).Decode(&jwks)
+
+    if err != nil {
+        return cert, err
+    }
+
+    for k, _ := range jwks.Keys {
+        if token.Header["kid"] == jwks.Keys[k].Kid {
+            cert = "-----BEGIN CERTIFICATE-----\n" + jwks.Keys[k].X5c[0] + "\n-----END CERTIFICATE-----"
+        }
+    }
+
+    if cert == "" {
+        err := errors.New("Unable to find appropriate key.")
+        return cert, err
+    }
+
+    return cert, nil
+}
+
