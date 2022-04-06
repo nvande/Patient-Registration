@@ -85,3 +85,5 @@ To do this:
 
 It's that easy. Now, if you try to log in to the application or hit the api with a jwt token that doesn't match a user on the whitelist, you will get only get back an unauthorized message
 
+
+*note: this project uses some free vector images created by the artist imajin noasking, https://www.vecteezy.com/members/imajin-noasking
