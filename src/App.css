@@ -24,6 +24,14 @@ html, .App {
   height: 50px;
 }
 
+.img-responsive {
+  display: block;
+  margin: 0 auto;
+  max-width: 100%;
+  height: auto;
+  max-height: 300px;
+}
+
 .prBody {
   position: relative;
   background-color: #fff;

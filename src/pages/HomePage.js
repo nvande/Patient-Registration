@@ -1,5 +1,6 @@
 import PageComponent from '../components/PageComponent.js';
 import LoginComponent from '../components/LoginComponent.js'
+import config from "../config.json";
 
 import React from 'react';
 import { useAuth0 } from "../react-auth0-spa";
@@ -18,6 +19,7 @@ function HomePage() {
 						{!isAuthenticated && 
 							<React.Fragment>
 								<Col className="text-center">
+									<img className={"img-responsive"} src={`${config.server_url}/images/patient.jpg`}/>
 									<h1 className="mt-5">
 										Patient Registration
 									</h1>
