@@ -35,7 +35,7 @@ function AppointmentPage() {
         .catch(console.log)
 	};
 
-	const dateString = appt ? format(parseISO(appt.appt_time), "MMMM do, yyyy 'at' h:mm (a)") : "Loading...";
+	const dateString = appt ? format(parseISO(appt.appt_time), "MMMM do, yyyy 'at' h:mm a") : "Loading...";
 
 	if (loading || !appt) {
 	    return <LoadingPage/>;
@@ -45,9 +45,12 @@ function AppointmentPage() {
 
 		<PageComponent>
 			<div className="mt-5">
-				<h3 className={"text-center mb-5"}>
-					Viewing Appointment for {dateString}
+				<h3 className={"text-center mb-3"}>
+					Appointment for {appt.patient.firstname} {appt.patient.middle} {appt.patient.lastname}
 				</h3>
+				<span className={"d-block mb-5 text-center lead"}>
+					{dateString}
+				</span>
 			</div>
 			{ appt && <AppointmentComponent appt={appt} isFull={true}/> }
 		</PageComponent>

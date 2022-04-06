@@ -2,7 +2,7 @@ import { Card, Button, ListGroup, ListGroupItem, Container, Row, Col } from 'rea
 
 import { format, parseISO } from "date-fns";
 import parsePhoneNumber from 'libphonenumber-js';
-import { FaUser, FaClock } from 'react-icons/fa';
+import { FaUser, FaClock, FaEnvelope } from 'react-icons/fa';
 import { Link } from 'react-router-dom';
 import config from "../config.json";
 
@@ -46,12 +46,14 @@ function AppointmentComponent({appt, isFull, multiple}) {
 				    </Col>
 				    {!isFull ?
 				    	<Col>
-				    		<h4 className={"text-end"}>{format(parseISO(appt.appt_time), "MMMM do, yyyy")}</h4>
-				    		<h4 className={"text-end"}>{format(parseISO(appt.appt_time), "'@' h:mm (a)")}</h4>
+				    		<span className={"d-block text-end lead"}>{format(parseISO(appt.appt_time), "MMMM do, yyyy")}</span>
+				    		<span className={"d-block text-end lead"}>{format(parseISO(appt.appt_time), "'@' h:mm a")}</span>
 				    	</Col>
 				    	:
 				    	<Col>
-				    		<img height="200" className={"float-end"} src={`${config.server_url}/images/license/${appt.patient.photo}`}/>
+				    		<div className="licenseWrapper">
+				    			<img className={"float-end img-fluid licenseImage"} src={`${config.server_url}/images/license/${appt.patient.photo}`}/>
+				    		</div>
 				    	</Col>
 					}
 				  </Row>
@@ -60,7 +62,7 @@ function AppointmentComponent({appt, isFull, multiple}) {
 			<ListGroup className="list-group-flush">
 			      <ListGroupItem><b>Date of birth:</b> {appt.patient.dob}</ListGroupItem>
 			      <ListGroupItem><b>Address:</b> {address}</ListGroupItem>
-			      <ListGroupItem><b>Email:</b> {appt.patient.email}</ListGroupItem>
+			      <ListGroupItem><b>Email:</b> {appt.patient.email} <a href = {`mailto: ${appt.patient.email}`}><FaEnvelope/></a></ListGroupItem>
 			</ListGroup>
 			{!isFull &&
 				<Card.Body className={"text-end"}>

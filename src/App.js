@@ -1,4 +1,3 @@
-import logo from './logo.svg';
 import HomePage from './pages/HomePage.js';
 import RegistrationPage from './pages/RegistrationPage';
 import AppointmentsPage from './pages/AppointmentsPage';

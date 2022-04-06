@@ -58,6 +58,16 @@ html, .App {
   width: calc(100% - 40px);
 }
 
+.licenseWrapper {
+  padding: 10px;
+}
+
+.licenseImage {
+    width: 100%; /* or any custom size */
+    height: 100%; 
+    object-fit: contain;
+}
+
 .react-datetime-picker, .react-date-picker, .selectCountry, .selectRegion, .react-tel-input .form-control {
   display: block;
   width: 100%;

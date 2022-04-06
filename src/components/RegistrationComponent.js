@@ -1,7 +1,7 @@
 import { useState, Fragment } from 'react';
 
 import { Container, Row, Col, Button, Form, Alert, InputGroup } from 'react-bootstrap';
-import { Navigate } from 'react-router-dom';
+import { Link, Navigate } from 'react-router-dom';
 import DateTimePicker from 'react-datetime-picker';
 import DatePicker from 'react-date-picker';
 import PhoneInput from 'react-phone-input-2';
@@ -525,9 +525,16 @@ function RegistrationComponent() {
 					</Row>
 				</Container>
 			    <div className={'text-center mt-5'}>
-					<Button className={'px-5'} variant="primary" size="lg" onClick={postRegistration}>
-				    	Register
-					</Button>
+				    <div>
+					    <Link to="/">
+					    	<Button className={'px-5'} variant="secondary" size="lg">
+						    Cancel
+							</Button>
+						</Link>
+						<Button className={'px-5 ms-3'} variant="primary" size="lg" onClick={postRegistration}>
+					    	Register
+						</Button>
+					</div>
 			    </div>
 			</Form>
 		</div>

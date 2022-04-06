@@ -15,20 +15,34 @@ function HomePage() {
 	const [ error, setError ] = useState(false);
 
 	useEffect(() => {
-		setError(searchParams.has('error'))
+		if(searchParams.has('error')) {
+			setError(true);
 
+		}
 	}, [searchParams]);
+
+	const onErrorClose = () => {
+		setError(false);
+		if( searchParams.get('error') == 'unauthorized' ) {
+			logout();
+		}
+	};
 
 	return (
 		<PageComponent>
 			<div className="mt-5">
 				<Container>
 					{ error && 
-			 	      <Alert variant="danger" onClose={() => setError(false)} dismissible>
+			 	      <Alert variant="danger" onClose={() => onErrorClose()} dismissible>
 				        <Alert.Heading>{searchParams.get('error')}</Alert.Heading>
 				        <p>
 				          {searchParams.get('error_description')}
 				        </p>
+				        {searchParams.get('error') == 'unauthorized' && 
+				        	<p>
+				        		Please close this message before trying again.
+				        	</p>
+				        }
 				      </Alert>
 				    }
 					<Row>
