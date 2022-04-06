@@ -2,7 +2,7 @@
 
 ## Configuration
 
-Before you can launch the project, you need to configure a few things:\
+Before you can launch the project, you need to configure a few things:
 
 #### Setting up Auth0:
 
@@ -33,7 +33,7 @@ Now, click on **Quick Start** and copy some values from the C# code into the ser
 
 With the Auth0 Configuration finished, all that remains is to have a MySQL server running locally to run the application.
 
-#### Setting up MySQL
+#### Setting up MySQL:
 
 Make sure MySQL is installed and running on your machine.
 
@@ -56,4 +56,4 @@ In another terminal window, run:
 ### `cd server`
 ### `go run main.go`
 
-This runs the server application which the React frontend will communicate with and which serves Appointment data and License images for the application .\
+This runs the server application which the React frontend will communicate with and which serves Appointment data and License images for the application .
