@@ -18,9 +18,6 @@
 .env.test.local
 .env.production.local
 
-# uploaded images
-/server/images/license
-
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
