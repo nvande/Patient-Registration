@@ -1,6 +1,6 @@
 function FooterComponent(props){
 	return (
-		<div className={'text-center mt-5 mb-5 text-muted footer'}>
+		<div className={'text-center mt-3 mb-3 text-muted footer'}>
 			<small>{props.footer}</small>
 		</div>
 	);

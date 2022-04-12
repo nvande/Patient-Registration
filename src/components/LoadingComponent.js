@@ -3,8 +3,9 @@ import { FaHeartbeat } from 'react-icons/fa';
 
 function LoadingComponent(props){
 	return (
-		<Container className={'text-center mt-5 mb-5 loadingComponent'}>
+		<Container className={'text-center mt-5 loadingComponent'}>
 			<FaHeartbeat className={"loadingIcon"}/>
+			<span className={'d-block'}>Loading...</span>
 		</Container>
 	);
 }

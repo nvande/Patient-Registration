@@ -44,11 +44,11 @@ function AppointmentPage() {
 	return (
 
 		<PageComponent>
-			<div className="mt-5">
+			<div className="mt-4">
 				<h3 className={"text-center mb-3"}>
 					Appointment for {appt.patient.firstname} {appt.patient.middle} {appt.patient.lastname}
 				</h3>
-				<span className={"d-block mb-5 text-center lead"}>
+				<span className={"d-block mb-4 text-center lead"}>
 					{dateString}
 				</span>
 			</div>

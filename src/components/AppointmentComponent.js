@@ -2,7 +2,7 @@ import { Card, Button, ListGroup, ListGroupItem, Container, Row, Col } from 'rea
 
 import { format, parseISO } from "date-fns";
 import parsePhoneNumber from 'libphonenumber-js';
-import { FaUser, FaClock, FaEnvelope } from 'react-icons/fa';
+import { FaUser, FaClock, FaEnvelope, FaChevronLeft, FaChevronRight } from 'react-icons/fa';
 import { Link } from 'react-router-dom';
 import config from "../config.json";
 
@@ -38,7 +38,7 @@ function AppointmentComponent({appt, isFull, multiple}) {
 		<Card className={"mb-5"} >
 		<Card.Header as="h5" className={headerClass}><span className={"badge badge-pill badge-light float-right"}><FaClock className="iconInline"/> {text}</span></Card.Header>
 			<Card.Body>
-				<Container>
+				<Container className={"px-0"}>
 				  <Row>
 				    <Col>
 				    	<Card.Title as={isFull ? "h1" : "h4"}>{appt.patient.lastname}, {appt.patient.firstname} {appt.patient.middle}{appt.patient.middle.length > 0 ? "." : ""}</Card.Title>
@@ -66,13 +66,13 @@ function AppointmentComponent({appt, isFull, multiple}) {
 			</ListGroup>
 			{!isFull &&
 				<Card.Body className={"text-end"}>
-					<Link to={`/appointment/`+appt.id}><Button className={btnClass}>View Appointment</Button></Link>
+					<Link to={`/appointment/`+appt.id}><Button className={btnClass}>View Appointment <FaChevronRight/></Button></Link>
 				</Card.Body>
 			}
 		</Card>
 		{isFull &&
 			<div className={"text-center"}>
-				<Link to={'/appointments/'}><Button size="lg">Return to Appointments List</Button></Link>
+				<Link to={'/appointments/'}><Button size="lg"><FaChevronLeft/> Return to Appointments List</Button></Link>
 			</div>
 		}
 		</Col>

@@ -34,7 +34,7 @@ function HomePage() {
 				<Container>
 					{ error && 
 			 	      <Alert variant="danger" onClose={() => onErrorClose()} dismissible>
-				        <Alert.Heading>{searchParams.get('error')}</Alert.Heading>
+				        <Alert.Heading>Unable to Log in. Reason: {searchParams.get('error')}</Alert.Heading>
 				        <p>
 				          {searchParams.get('error_description')}
 				        </p>

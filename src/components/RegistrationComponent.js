@@ -226,7 +226,7 @@ function RegistrationComponent() {
 	return (
 		<div>
 			<Form>
-				<h4 className={"mt-5 lead"}><FaUser className="stepIcon"/> Patient Information </h4>
+				<h4 className={"mt-3 lead"}><FaUser className="stepIcon"/> Patient Information </h4>
 			 	<Container className="my-3">
 			 		{ error && 
 			 	      <Alert variant="danger" onClose={() => setError(false)} dismissible>
@@ -263,7 +263,7 @@ function RegistrationComponent() {
 						</Col>
 				    	<Col xs={4} lg={2} className={"mb-2 mb-md-4"}>
 				    		<Form.Group controlId="formMiddleName">
-				    			<Form.Label>Middle initial</Form.Label>
+				    			<Form.Label>Middle init.</Form.Label>
 							    <Form.Control
 							    	value={name.middle}
 							    	name="middle"
@@ -447,7 +447,7 @@ function RegistrationComponent() {
 			              controlId="formPostal"
 			              className="position-relative mb-2 mb-md-4"
 			            >
-			              <Form.Label>{address.country == "United States" ? 'ZIP Code' : 'Postal Code' }</Form.Label>
+			              <Form.Label>{address.country == "United States" ? 'ZIP Code' : 'Postal' }</Form.Label>
 			              <Form.Control
 			                type="text"
 			                name="postal"
@@ -516,6 +516,7 @@ function RegistrationComponent() {
 								value={apptTime}
 								onChange={setApptTime}
 								disableClock
+								minDate={new Date()}
 								className={errors.appointment_time ? 'is-invalid' : ''}
 							/>
 							<Form.Control.Feedback type="invalid">
@@ -524,18 +525,22 @@ function RegistrationComponent() {
 						</Form.Group>
 					</Row>
 				</Container>
-			    <div className={'text-center mt-5'}>
-				    <div>
-					    <Link to="/">
-					    	<Button className={'px-5'} variant="secondary" size="lg">
-						    Cancel
+			    <Container className={'text-center mt-5'}>
+				    <Row>
+				    	<Col className={'text-center'}>
+						    <Link to="/">
+						    	<Button className={'px-5 mb-2 float-md-end'} variant="secondary" size="lg">
+							    Cancel
+								</Button>
+							</Link>
+						</Col>
+						<Col>
+							<Button className={'px-5 ms-md-3 float-md-start'} variant="primary" size="lg" onClick={postRegistration}>
+						    	Register
 							</Button>
-						</Link>
-						<Button className={'px-5 ms-3'} variant="primary" size="lg" onClick={postRegistration}>
-					    	Register
-						</Button>
-					</div>
-			    </div>
+						</Col>
+					</Row>
+			    </Container>
 			</Form>
 		</div>
 	);
